@@ -1,4 +1,5 @@
-//Trends column extension by Will Hawker (www.willhawker.com)
+//Copy and paste this code at the bottom of default.js
+//Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 TD.extensions = {};
 TD.extensions.Trends = function() {
     var a = {},
