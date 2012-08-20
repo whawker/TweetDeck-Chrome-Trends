@@ -3,6 +3,7 @@
 TD.extensions = {};
 TD.extensions.Trends = function() {
     var a = {},
+    handle='',
     refreshTime = 900000,
     location = 23424975;
     trendItem = '<article><div class="js-chirp chp"><div class="chp-content" style="margin-left: 0;"><i class="dogear"></i><header></header><p></p><footer><div class="js-media"></div></footer></div></div></article>',
@@ -62,6 +63,7 @@ TD.extensions.Trends = function() {
         }
 		var woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
 		a.setTrendLocationWoeid(woeid);
+        handle = TD.storage.accountController.getPreferredAccount().getUsername();
 		window.setInterval(getTrends, 1000);
         trackGoogleAnalytics();
     }
@@ -76,6 +78,7 @@ TD.extensions.Trends = function() {
         if(typeof(_gaq) != 'undefined' && 'push' in _gaq) {
             _gaq.push(['b._setAccount', 'UA-33365040-1']);
             _gaq.push(['b._trackPageview']);
+            _gaq.push(['b._setCustomVar', 1, 'handle', handle, 2]);
         } else {
             setTimeout(trackGoogleAnalytics, 500);
             return;
@@ -114,6 +117,4 @@ TD.extensions.Trends = function() {
     return a;
 }();
 //Override TD.ui.main.init to include TD.extension.Trends.init
-TD.ui.main.init=function(){var d=TD.ui.template.render("topbar/topbar"),g=$("body");g.prepend(d);g.on("click","a",function(h){TD.util.maybeOpenClickExternally(h)});TD.ui.columns.init();TD.ui.columnNav.init();
-TD.ui.updates.init();TD.ui.compose.init();TD.ui.openColumn.init();TD.extensions.Trends.init();$("#topbar").live("click",TD.ui.main.handleHeaderUI);$(".js-show-tip").tipsy({live:true,gravity:"s"});$(".js-show-tip-n").tipsy({live:true,gravity:"n"});var e=$(".js-search-form"),f=$(".js-search-input");f.focus(function(){e.addClass("s-searchmode")}).blur(function(){f.val().length===0&&e.removeClass("s-searchmode")}).closest("form").submit(function(h){TD.ui.openColumn.showSearch(f.val());f.val("");f.blur();h.preventDefault()});$("#topbar").find(".js-clear-search").click(function(){f.val("");
-f.focus()});g.on("click","a",function(h){var l=$(h.currentTarget);if(h.isDefaultPrevented()===false){TD.util.openURL(l.attr("href"));h.preventDefault()}});$.subscribe("/storage/client/settings/use_narrow_columns",TD.ui.main.updateColumnSize);TD.ui.main.updateColumnSize()}
+TD.ui.main.init=function(){var b=TD.ui.template.render("topbar/topbar"),c=$("body");c.prepend(b),c.on("click","a",function(a){var b=TD.util.maybeOpenClickExternally(a)}),TD.ui.columns.init(),TD.ui.columnNav.init(),TD.ui.updates.init(),TD.ui.compose.init(),TD.ui.openColumn.init(),TD.extensions.Trends.init(),$("#topbar").live("click",TD.ui.main.handleHeaderUI),$(".js-show-tip").tipsy({live:!0,gravity:"s"}),$(".js-show-tip-n").tipsy({live:!0,gravity:"n"});var d=$(".js-search-form"),e=$(".js-search-input");e.focus(function(a){d.addClass("s-searchmode")}).blur(function(a){e.val().length===0&&d.removeClass("s-searchmode")}).keydown(function(a){a.which===TD.constants.keyCodes.escape&&e.val("").blur()}).closest("form").submit(function(a){TD.ui.openColumn.showSearch(e.val()),e.val(""),e.blur(),a.preventDefault()});var f=$("#topbar").find(".js-clear-search");f.click(function(a){e.val(""),e.focus()}),c.on("click","a",function(a){var b=$(a.currentTarget),c=b.attr("rel"),d=!1;switch(c){case"user":TD.ui.openColumn.showTwitterProfile(_.last(b.attr("href").split("/"))),d=!0;break;case"hashtag":TD.ui.openColumn.showSearch(b.text()),d=!0}d&&a.preventDefault(),a.isDefaultPrevented()===!1&&(TD.util.openURL(b.attr("href")),a.preventDefault())}),$.subscribe("/storage/client/settings/use_narrow_columns",TD.ui.main.updateColumnSize),TD.ui.main.updateColumnSize()}
