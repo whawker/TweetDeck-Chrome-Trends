@@ -70,7 +70,7 @@ TD.extensions.Trends = function() {
     a.clearTrends = function () {
         var column = a.getJTrendsColumn();
         if(column !== false){
-            column.find('div.scroll-content').empty();
+            column.find('div.column-content').empty();
         }
     }
     var trackGoogleAnalytics = function() {
@@ -90,7 +90,7 @@ TD.extensions.Trends = function() {
         }
     }
 	var addTrendLocationSelector = function(column) {
-		column.find('div.scroll-content').empty().append(trendSelector);
+		column.find('div.column-content').empty().append(trendSelector);
 		$('#trend-location').val(a.getTrendLocationWoeid()).change(function(){
 			$(this).find('option:selected').each(function(){
 				var loc = $(this);
@@ -103,7 +103,7 @@ TD.extensions.Trends = function() {
     var getTrends = function() {
         var column = a.getJTrendsColumn();
         if(column !== false){
-            if(column.find('div.scroll-content').is(':empty')){
+            if(column.find('div.column-content').is(':empty')){
                 $.getJSON('https://api.twitter.com/1/trends/' +a.getTrendLocationWoeid() +'.json',
                     {},
                     function(data) {
@@ -122,12 +122,12 @@ TD.extensions.Trends = function() {
     return a;
 }();
 //Override TD.ui.main.init to include TD.extension.Trends.init
-TD.ui.main.init=function(){var b=TD.ui.template.render("topbar/topbar"),c=$("body");c.prepend(b),c.on("click","a",function(a){var b=TD.util.maybeOpenClickExternally(a)}),TD.ui.columns.init(),TD.ui.columnNav.init(),TD.ui.updates.init(),TD.ui.compose.init(),TD.ui.openColumn.init(),TD.extensions.Trends.init(),$("#topbar").live("click",TD.ui.main.handleHeaderUI),$(".js-show-tip").tipsy({live:!0,gravity:"s"}),$(".js-show-tip-n").tipsy({live:!0,gravity:"n"});var d=$(".js-search-form"),e=$(".js-search-input");e.focus(function(a){d.addClass("s-searchmode")}).blur(function(a){e.val().length===0&&d.removeClass("s-searchmode")}).keydown(function(a){a.which===TD.constants.keyCodes.escape&&e.val("").blur()}).closest("form").submit(function(a){TD.ui.openColumn.showSearch(e.val()),e.val(""),e.blur(),a.preventDefault()});var f=$("#topbar").find(".js-clear-search");f.click(function(a){e.val(""),e.focus()}),c.on("click","a",function(a){var b=$(a.currentTarget),c=b.attr("rel"),d=!1;switch(c){case"user":var e=_.last(b.attr("href").split("/"));$("body").trigger("uiShowProfile",{id:e}),d=!0;break;case"hashtag":TD.ui.openColumn.showSearch(b.text()),d=!0}d&&a.preventDefault(),a.isDefaultPrevented()===!1&&(TD.util.openURL(b.attr("href")),a.preventDefault())}),$.subscribe("/storage/client/settings/use_narrow_columns",TD.ui.main.updateColumnSize),TD.ui.main.updateColumnSize()}
+TD.ui.main.init=function(){var t=TD.ui.template.render("topbar/app_header"),n=$("body");n.prepend(t),n.on("click","a",function(e){var t=TD.util.maybeOpenClickExternally(e)}),TD.ui.columns.init(),TD.ui.columnNav.init(),TD.ui.updates.init(),TD.ui.compose.init(),TD.ui.openColumn.init(),TD.extensions.Trends.init(),$(".js-app-header").live("click",TD.ui.main.handleHeaderUI),$(".js-show-tip").tipsy({live:!0,gravity:"s"}),$(".js-show-tip-n").tipsy({live:!0,gravity:"n"});var r=$(".js-search-form"),i=$(".js-search-input");i.keydown(function(e){e.which===TD.constants.keyCodes.escape&&i.val("").blur()}).closest("form").submit(function(e){TD.ui.openColumn.showSearch(i.val()),i.val(""),i.blur(),e.preventDefault()});var s=$("#topbar").find(".js-perform-search");s.click(function(e){TD.ui.openColumn.showSearch(i.val()),i.val(""),i.focus()}),n.on("click","a",function(e){var t=$(e.currentTarget),n=t.attr("rel"),r=!1;switch(n){case"user":var i=_.last(t.attr("href").split("/"));$("body").trigger("uiShowProfile",{id:i}),r=!0;break;case"hashtag":TD.ui.openColumn.showSearch(t.text()),r=!0}r&&e.preventDefault(),e.isDefaultPrevented()===!1&&(TD.util.openURL(t.attr("href")),e.preventDefault())}),n.on("click","button",function(e){e.preventDefault()}),$.subscribe("/storage/client/settings/use_narrow_columns",TD.ui.main.updateColumnSize),TD.ui.main.updateColumnSize(),$.subscribe("/storage/client/settings/font_size",TD.ui.main.updateFontSize),TD.ui.main.updateFontSize(),$.subscribe("/storage/client/settings/theme",TD.ui.main.updateTheme),TD.ui.main.updateTheme()}
 //Override TD.services.TwitterClient.prototype.makeTwitterCall to pull most popular tweets
-TD.services.TwitterClient.prototype.makeTwitterCall=function(a,b,c,d,e,f,g){
-    if (a.indexOf('search.json') != -1 && 'result_type' in b && 'count' in b) {
-        b.result_type = 'popular,mixed,recent';
-        b.count = 50;
+TD.services.TwitterClient.prototype.makeTwitterCall=function(e,t,n,r,i,s,o){
+	if (e.indexOf('search.json') != -1 && 'result_type' in t && 'count' in t) {
+        t.result_type = 'popular,mixed,recent';
+        t.count = 50;
     }
-    var h=this,i=function(a){if(e)try{a=e.call(h,a)}catch(b){console.log("Error processing Twitter data",a,b),g(b);return}f&&f(a)},j=function(f,i,j){var k,l=[];f.responseText&&(k=JSON.parse(f.responseText),k&&k.errors&&(typeof k.errors=="string"?l.push(h.getError(k.errors,f,a,b)):_.each(k.errors,function(c){l.push(h.getError(c,f,a,b))}))),$(document).trigger("twitterCallError",{request:{url:a,params:b,method:c,isSigned:d,processor:e},response:{xhr:f,ts:i,error:j},errors:l}),g&&g(f,i,j,l)};b?(b.include_entities=1,b.include_user_entities=1,b.include_cards=1):b={},b.send_error_codes=1,c==="GET"?this.get(a,b,d,i,j):this.post(a,b,null,null,i,j)
+	var u=this,a=function(e){if(i)try{e=i.call(u,e)}catch(t){console.log("Error processing Twitter data",e,t),o(t);return}s&&s(e)},f=function(s,a,f){var l,c=[];s.responseText&&(l=JSON.parse(s.responseText),l&&l.errors&&(typeof l.errors=="string"?c.push(u.getError(l.errors,s,e,t)):_.each(l.errors,function(n){c.push(u.getError(n,s,e,t))}))),$(document).trigger("twitterCallError",{request:{url:e,params:t,method:n,isSigned:r,processor:i},response:{xhr:s,ts:a,error:f},errors:c}),o&&o(s,a,f,c)};t?(t.include_entities=1,t.include_user_entities=1,t.include_cards=1):t={},t.send_error_codes=1,n==="GET"?this.get(e,t,r,a,f):this.post(e,t,null,null,a,f)
 }
