@@ -11,6 +11,12 @@ The now defunct Adobe Air version of TweetDeck, used to have a trends column, ad
 
 This is a super unofficial, pretty dirty hack to add this functionality back in.
 
+## Features
+
+1. Show trending topics for any region offered on the main Twitter site.
+2. Shows most popular tweets for a search, rather than most recent
+3. Filter trending topics using the built in Global Filter
+
 ## Installation Instructions
 
 Apologies, as its not the easiest thing in the world to install.
