@@ -24,7 +24,7 @@ Apologies, as its not the easiest thing in the world to install.
 For all systems it essentially boils down to
 
 1. Search for a folder called `hbdpomandigafcibbmofojjchbcdagbl` 
-2. Once found open it, and navigate into `2.0.1_0/web/scripts/`
+2. Once found open it, and navigate into `2.0.2_0/web/scripts/`
 3. Insert the contents of `trends.js` **at the bottom** of `default.js`
 4. [Flush Chrome's cache](http://support.google.com/chrome/bin/answer.py?hl=en&answer=95582)
 5. Refresh the TweetDeck app page
