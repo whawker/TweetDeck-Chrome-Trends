@@ -22,8 +22,8 @@ TD.extensions.Trends = function() {
         return false;
     }
 	a.getJTrendsColumn = function() {
-        if($('h1:contains("Trends")').parent().parent().size()){
-            return $('h1:contains("Trends")').parent().parent();
+        if($('h1:contains("Trends: ")').parent().parent().size()){
+            return $('h1:contains("Trends: ")').parent().parent();
         }
         return false;
     }
