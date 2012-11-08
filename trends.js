@@ -51,6 +51,9 @@ TD.extensions.Trends = function() {
     a.setTrendLocationWoeid = function(newLocation) {
         location = newLocation;
     }
+    a.update = function() {
+        $('body').trigger('TDTrendsColUpdate');
+    }
     a.init = function() {
         allTdColumns = a.getAllColumns();
         if(allTdColumns.length == 0) {
@@ -67,8 +70,10 @@ TD.extensions.Trends = function() {
         
         var column = a.getJTrendsColumn();
         if(column !== false) {
+            column.parents('section').first().css({'border-radius': '5px'});
             addTrendLocationSelector(column);
-            $('body').trigger('TDTrendsColUpdate');
+            countdownTimer.setTimer(addCountdownTimer(column));
+            a.update();
             
             handle = TD.storage.accountController.getPreferredAccount().getUsername();
             trackGoogleAnalytics();
@@ -114,13 +119,24 @@ TD.extensions.Trends = function() {
 				var loc = $(this);
 				a.setTrendLocationWoeid(loc.val());
 				a.setTitle($.trim(loc.text()));
-                $('body').trigger('TDTrendsColUpdate');
+                a.update();
 			});
 		});
+	}
+    var addCountdownTimer = function(column) {
+        var timerHtml = '<div id="update-countdown" style="height: 14px; position: absolute; bottom: 0; left: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><span id="countdown-timer" style="float: left;">Update in: <span class="minutes">5</span>:<span class="seconds">00</span></span><a href="#" id="update-now" style="float: right;">Update now</a></div>';
+		column.find('.column-scroller').css({'margin-bottom': '26px'}).after(timerHtml);
+        var timer = $('#update-countdown');
+        timer.find('#update-now').on('click', function(e) {
+            e.preventDefault();
+            a.update();
+        });
+        return timer.find('#countdown-timer');
 	}
     $('body').on('TDTrendsColUpdate', function(e){
         var column = a.getJTrendsColumn();
         if(column !== false){
+            countdownTimer.stop();
             content = column.find('.column-content');
             content.empty();            
             var d = $('.js-search-form'), f, textFilter = getGlobalTextContentFilters();
@@ -137,7 +153,9 @@ TD.extensions.Trends = function() {
                         t.find('header').append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
                         content.append(t);
                     });
-                    setTimeout((function() { $('body').trigger('TDTrendsColUpdate') }), a.getRefreshTime());
+                    setTimeout((function() { a.update(); }), a.getRefreshTime());
+                    countdownTimer.setTime(a.getRefreshTime());
+                    countdownTimer.start();
                     return true;
                 },
                 failure: function(response) {
@@ -147,14 +165,50 @@ TD.extensions.Trends = function() {
             });
         }
     });
+    var countdownTimer = (function(){;
+        var b = {};
+        b.setTimer = function(timer) {
+            b.timer = timer;
+        }
+        b.getTimer = function() {
+            return b.timer;
+        }
+        b.updateTimer = function(min, sec) {
+            if(sec < 10) sec = '0' + sec;
+            var timer = b.getTimer();
+            timer.find('.minutes').html(min);
+            timer.find('.seconds').html(sec);
+        }
+        b.setTime = function(ms) {
+            b.time = parseInt(ms, 10);
+        }
+        b.getTime = function(ms) {
+            return b.time;
+        }
+        b.update = function() {
+            var timeNow = (b.getTime()/1000) - 1,
+                mins = Math.floor(timeNow / 60),
+                secs = timeNow % 60;
+            b.setTime(timeNow * 1000);
+            b.updateTimer(mins, secs);
+            if(mins != 0 || secs != 0) b.updater = setTimeout((function(){ b.update() }), 1000);
+        }
+        b.start = function() {
+            b.update();
+        }
+        b.stop = function() {
+            clearTimeout(b.updater);
+        }
+        return b;
+    }())
     return a;
 }();
 //Override TD.ui.main.init to include TD.extension.Trends.init
-TD.ui.main.init=function(){var a=TD.ui.main,b=TD.ui.template.render("topbar/app_header"),c=$("body");c.prepend(b),c.on("click","a",function(a){var b=TD.util.maybeOpenClickExternally(a)}),TD.ui.columns.init(),TD.ui.columnNav.init(),TD.ui.updates.init(),TD.ui.compose.init(),TD.ui.openColumn.init(),TD.extensions.Trends.init(),$(".js-app-header").live("click",a.handleHeaderUI),$(".js-show-tip").tipsy({live:!0,gravity:"s"}),$(".js-show-tip-n").tipsy({live:!0,gravity:"n"});var d=$(".js-search-form"),e=$(".js-search-input");e.keydown(function(a){a.which===TD.constants.keyCodes.escape&&e.val("").blur()}).closest("form").submit(function(a){TD.ui.openColumn.showSearch(e.val()),e.val(""),e.blur(),a.preventDefault()});var f=$("#topbar").find(".js-perform-search");f.click(function(a){TD.ui.openColumn.showSearch(e.val()),e.val(""),e.focus()}),c.on("click","a",function(a){var b=$(a.currentTarget),c=b.attr("rel"),d=!1;switch(c){case"user":var e=_.last(b.attr("href").split("/"));$("body").trigger("uiShowProfile",{id:e}),d=!0;break;case"hashtag":TD.ui.openColumn.showSearch(b.text()),d=!0}d&&a.preventDefault(),a.isDefaultPrevented()===!1&&(TD.util.openURL(b.attr("href")),a.preventDefault())}),c.on("click","button",function(a){a.preventDefault()}),$.subscribe("/storage/client/settings/use_narrow_columns",a.updateColumnSize),a.updateColumnSize(),$.subscribe("/storage/client/settings/font_size",a.updateFontSize),a.updateFontSize(),$.subscribe("/storage/client/settings/theme",a.updateTheme),a.updateTheme()}
+TD.ui.main.init=function(){var a=TD.ui.main,b=$(TD.ui.template.render("topbar/app_header")),c=$("body");c.prepend(b),c.on("click","a",function(a){var b=TD.util.maybeOpenClickExternally(a)}),TD.ui.columns.init(),TD.ui.columnNav.init(),TD.ui.updates.init(),TD.ui.compose.init(),TD.ui.openColumn.init(),TD.extensions.Trends.init(),$(".js-app-header").live("click",a.handleHeaderUI),$(".js-show-tip").tipsy({live:!0,gravity:"s"}),$(".js-show-tip-n").tipsy({live:!0,gravity:"n"});var d=b.find(".js-search-input");d.closest("form").submit(function(a){TD.ui.openColumn.showSearch(d.val()),d.val(""),d.blur(),a.preventDefault()});var e=function(){d.blur()};d.on("uiInputBlur",e);var f=b.find(".js-perform-search");f.click(function(a){TD.ui.openColumn.showSearch(d.val()),d.val("")}),c.on("click","a",function(a){var b=$(a.currentTarget),c=b.attr("rel"),d=!1;switch(c){case"user":var e=_.last(b.attr("href").split("/"));$("body").trigger("uiShowProfile",{id:e}),d=!0;break;case"hashtag":TD.ui.openColumn.showSearch(b.text()),d=!0}d&&a.preventDefault(),a.isDefaultPrevented()===!1&&(TD.util.openURL(b.attr("href")),a.preventDefault())}),c.on("click","button",function(a){a.preventDefault()}),$.subscribe("/storage/client/settings/use_narrow_columns",a.updateColumnSize),a.updateColumnSize(),$.subscribe("/storage/client/settings/font_size",a.updateFontSize),a.updateFontSize(),$.subscribe("/storage/client/settings/theme",a.updateTheme),a.updateTheme()}
 //Override TD.services.TwitterClient.prototype.makeTwitterCall to pull most popular tweets
 TD.services.TwitterClient.prototype.makeTwitterCall=function(a,b,c,d,e,f,g){
     if (a.indexOf('search.json') != -1 && 'result_type' in b && 'count' in b) {
         b.result_type = 'popular,mixed,recent';
     }
-    var h=this,i=function(a){if(e)try{a=e.call(h,a)}catch(b){console.log("Error processing Twitter data",a,b),g(b);return}f&&f(a)},j=function(f,i,j){var k,l=[];f.responseText&&(k=JSON.parse(f.responseText),k&&k.errors&&(typeof k.errors=="string"?l.push(h.getError(k.errors,f,a,b)):_.each(k.errors,function(c){l.push(h.getError(c,f,a,b))}))),$(document).trigger("twitterCallError",{request:{url:a,params:b,method:c,isSigned:d,processor:e},response:{xhr:f,ts:i,error:j},errors:l}),g&&g(f,i,j,l)};b?(b.include_entities=1,b.include_user_entities=1,b.include_cards=1):b={},b.send_error_codes=1,c==="GET"?this.get(a,b,d,i,j):this.post(a,b,null,null,i,j)
+    var h=this,i=function(a){if(e)try{a=e.call(h,a)}catch(b){console.log("Error processing Twitter data",a,b),g(b);return}f&&f(a)},j=function(f,i,j){var k,l=[];f.responseText&&(k=JSON.parse(f.responseText),k&&k.errors&&(typeof k.errors=="string"?l.push(h.getError(k.errors,f,a,b)):_.each(k.errors,function(c){l.push(h.getError(c,f,a,b))}))),$(document).trigger("dataTwitterApiError",{request:{url:a,params:b,method:c,isSigned:d,processor:e},response:{xhr:f,ts:i,error:j},errors:l}),g&&(f.errors=l,g(f,i,j,l))};b?(b.include_entities=1,b.include_user_entities=1,b.include_cards=1):b={},b.send_error_codes=1,c==="GET"?this.get(a,b,d,i,j):this.post(a,b,null,null,i,j)
 }
