@@ -149,8 +149,49 @@ TD.extensions.Trends = function() {
                         for (f in textFilter) {
                             if((item.name).toLowerCase().indexOf(textFilter[f]) != -1) return 'continue'; //Hide this trend, continue to next loop iteration
                         }
-                        var t = $(trendItem);
-                        t.find('header').append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
+                        var t = $(trendItem),
+                            tHeader = t.find('header'),
+                            tFooter = t.find('footer');
+                        tHeader.append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
+                        tFooter.load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-news .discover-item-content',  function(news, status, xhr) {
+                            if (status == 'success' && tFooter.children('div').size()) {
+                                tHeader.append('<span style="float: right">Show news story</span>');
+                                tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
+                                tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    var text = $(this).text();
+                                    if(text.indexOf('Show') !== -1) {
+                                        $(this).text('Hide news story');
+                                        tFooter.children('div').slideDown();
+                                    } else {
+                                        $(this).text('Show news story');
+                                        tFooter.children('div').slideUp();
+                                    }
+                                });
+                                tFooter.find('.discover-item-image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
+                            } else {
+                                t.find('footer:empty').load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-item .events-card', function(eventStory, status, xhr) {
+                                    if (status == 'success' && tFooter.children('div').size()) {
+                                        tHeader.append('<span style="float: right">Show related event</span>');
+                                        tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
+                                        tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            var text = $(this).text();
+                                            if(text.indexOf('Show') !== -1) {
+                                                $(this).text('Hide related event');
+                                                tFooter.children('div').slideDown();
+                                            } else {
+                                                $(this).text('Show related event');
+                                                tFooter.children('div').slideUp();
+                                            }
+                                        });
+                                        tFooter.find('.image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
+                                    }
+                                });
+                            }
+                        });
                         content.append(t);
                     });
                     setTimeout((function() { a.update(); }), a.getRefreshTime());
