@@ -72,7 +72,7 @@ TD.extensions.Trends = function() {
         if(column !== false) {
             column.parents('section').first().css({'border-radius': '5px'});
             addTrendLocationSelector(column);
-            countdownTimer.setTimer(addCountdownTimer(column));
+            addUpdater(column);
             a.update();
             
             handle = TD.storage.accountController.getPreferredAccount().getUsername();
@@ -123,20 +123,13 @@ TD.extensions.Trends = function() {
 			});
 		});
 	}
-    var addCountdownTimer = function(column) {
-        var timerHtml = '<div id="update-countdown" style="height: 14px; position: absolute; bottom: 0; left: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><span id="countdown-timer" style="float: left;">Update in: <span class="minutes">5</span>:<span class="seconds">00</span></span><a href="#" id="update-now" style="float: right;">Update now</a></div>';
-		column.find('.column-scroller').css({'margin-bottom': '26px'}).after(timerHtml);
-        var timer = $('#update-countdown');
-        timer.find('#update-now').on('click', function(e) {
-            e.preventDefault();
-            a.update();
-        });
-        return timer.find('#countdown-timer');
+    var addUpdater = function(column) {
+        var updaterHtml = '<div id="update-countdown" style="height: 14px; position: absolute; bottom: 0; left: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><a href="#" id="update-now" style="float: right;">Update now</a></div>';
+		column.find('.column-scroller').css({'margin-bottom': '26px'}).after(updaterHtml);        
 	}
     $('body').on('TDTrendsColUpdate', function(e){
         var column = a.getJTrendsColumn();
         if(column !== false){
-            countdownTimer.stop();
             content = column.find('.column-content');
             content.empty();            
             var d = $('.js-search-form'), f, textFilter = getGlobalTextContentFilters();
@@ -191,12 +184,10 @@ TD.extensions.Trends = function() {
                                     }
                                 });
                             }
-                        });
+                        });                        
                         content.append(t);
                     });
                     setTimeout((function() { a.update(); }), a.getRefreshTime());
-                    countdownTimer.setTime(a.getRefreshTime());
-                    countdownTimer.start();
                     return true;
                 },
                 failure: function(response) {
@@ -206,42 +197,6 @@ TD.extensions.Trends = function() {
             });
         }
     });
-    var countdownTimer = (function(){;
-        var b = {};
-        b.setTimer = function(timer) {
-            b.timer = timer;
-        }
-        b.getTimer = function() {
-            return b.timer;
-        }
-        b.updateTimer = function(min, sec) {
-            if(sec < 10) sec = '0' + sec;
-            var timer = b.getTimer();
-            timer.find('.minutes').html(min);
-            timer.find('.seconds').html(sec);
-        }
-        b.setTime = function(ms) {
-            b.time = parseInt(ms, 10);
-        }
-        b.getTime = function(ms) {
-            return b.time;
-        }
-        b.update = function() {
-            var timeNow = (b.getTime()/1000) - 1,
-                mins = Math.floor(timeNow / 60),
-                secs = timeNow % 60;
-            b.setTime(timeNow * 1000);
-            b.updateTimer(mins, secs);
-            if(mins != 0 || secs != 0) b.updater = setTimeout((function(){ b.update() }), 1000);
-        }
-        b.start = function() {
-            b.update();
-        }
-        b.stop = function() {
-            clearTimeout(b.updater);
-        }
-        return b;
-    }())
     return a;
 }();
 //Override TD.ui.main.init to include TD.extension.Trends.init
