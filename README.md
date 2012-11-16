@@ -5,7 +5,8 @@ For list of features see <http://www.willhawker.com/sandbox/add-a-trends-column-
 
 This is a very unofficial TweetDeck extension to add a Trends column
 
-**N.B.** This is (currently??) only compatible with the **Google Chrome extension**, and does not work for TweetDeck accessed via any other means
+**N.B.** This is currently only compatible with **Google Chrome**, and does not (yet) work for TweetDeck accessed via any other means
+**N.B.** The Tampermonkey script only works for web version of TweetDeck (web.tweetdeck.com) due to browser security policies
 
 The now defunct Adobe Air version of TweetDeck, used to have a trends column, add I thought it be one of the most useful features of Twitter (except when it gets ruined by obsessive Justin Beiber et al fans). The new, web based version doesn't have this feature, and you can only add a search column for a specific (worldwide) trending topic.
 
@@ -18,7 +19,15 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 3. Shows most popular tweets for a search, rather than most recent
 4. Filter trending topics using the built in Global Filter
 
-## Installation Instructions
+## Installation Instructions (Tampermonkey)
+
+**Obviously**, this requires the [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo) Google Chrome extension has been installed
+
+Add the `tampermonkey.js` file as a new userscript
+
+**NOTE**, this method is only compatible with [web.tweetdeck.com](https://web.tweetdeck.com)
+
+## Installation Instructions (Tweetdeck Extension)
 
 Apologies, as its not the easiest thing in the world to install.
 
@@ -33,7 +42,7 @@ For all systems it essentially boils down to
 ## Limitations/Future work
 
 1. Can only add one trends column
-2. Will be wiped when TweetDeck is updated
+2. If using the TweetDeck Chrome extension it be wiped when TweetDeck is updated
 3. Clicking on a trending topic only shows last ~10 tweets
 
 
