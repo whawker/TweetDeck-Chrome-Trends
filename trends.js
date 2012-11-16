@@ -140,7 +140,7 @@ TD.extensions.Trends = function() {
     $('body').on('TDTrendsColUpdate', function(e){
         var column = a.getJTrendsColumn();
         if(column !== false){
-            content = column.find('.column-content');
+            content = column.find('.column-scroller');
             content.empty();            
             var d = $('.js-search-form'), f, textFilter = getGlobalTextContentFilters();
             $.ajax({
