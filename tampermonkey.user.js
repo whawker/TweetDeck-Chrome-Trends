@@ -5,16 +5,15 @@
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
-// @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.js
+// @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.user.js
 // @copyright    2012+, William Hawker (willhawker.com)
 // ==/UserScript==
+//Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 var trendsColInterval = setInterval((function(){ if(typeof(unsafeWindow.TD) != 'undefined' && unsafeWindow.TD.ready === true) { clearInterval(trendsColInterval); trendsColInit(unsafeWindow) } }), 10);
 function trendsColInit(window){
     var TD = window.TD,
         _gaq = window._gaq;
         $ = window.$;
-    //Copy and paste this code at the bottom of default.js
-    //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
     TD.extensions = {};
     TD.extensions.Trends = function() {
         var a = {},
