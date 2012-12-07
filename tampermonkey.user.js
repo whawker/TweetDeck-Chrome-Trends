@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.1
+// @version      2.1.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -35,7 +35,16 @@ function trendsColInit(window){
                 }
             }
             return false;
-        }    
+        }
+        a.getLoadingColumn = function() {
+            var allTdColumns = a.getAllColumns()
+            for(var myTdCol in allTdColumns) {
+                if(allTdColumns[myTdCol].model.getTitle().indexOf('loading') > -1) {
+                    return allTdColumns[myTdCol];
+                }
+            }
+            return false;
+        } 
         a.getJTrendsColumn = function() {
             if($('h1:contains("Trends: ")').parent().parent().size()){
                 return $('h1:contains("Trends: ")').parent().parent();
@@ -81,9 +90,11 @@ function trendsColInit(window){
                 return;
             }
             if(a.getTrendsColumn() === false) {
-                var myTwitterAccount = TD.storage.accountController.getPreferredAccount('twitter'),
-                myColTrends = TD.controller.columnManager.makeColumnFor('Trends: United Kingdom', 'other', myTwitterAccount.getType(), myTwitterAccount.getKey());
-                TD.controller.columnManager.addColumnToUI(myColTrends);
+                var col = new TD.components.OpenColumn;
+                col.go('add', ['trends'], '', {});
+                var trendsCol = a.getLoadingColumn();
+                trendsCol.model.setTitle('Trends: United Kingdom');
+                TD.controller.columnManager.addColumnToUI(trendsCol);
             }
             var woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
             a.setTrendLocationWoeid(woeid);
@@ -109,7 +120,6 @@ function trendsColInit(window){
             var i,
                 filters = [],
                 globalFilter = TD.settings.getGlobalFilter();
-
             for (i in globalFilter) {
                 if(globalFilter[i].type == 'phrase') filters.push((globalFilter[i].value).toLowerCase());
             }
