@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3
+// @version      2.1.3.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -36,15 +36,6 @@ function trendsColInit(window){
             }
             return false;
         }
-        a.getLoadingColumn = function() {
-            var allTdColumns = a.getAllColumns()
-            for(var myTdCol in allTdColumns) {
-                if(allTdColumns[myTdCol].model.getTitle().indexOf('loading') > -1) {
-                    return allTdColumns[myTdCol];
-                }
-            }
-            return false;
-        } 
         a.getJTrendsColumn = function() {
             if($('h1:contains("Trends: ")').parent().parent().size()){
                 return $('h1:contains("Trends: ")').parent().parent();
@@ -90,11 +81,11 @@ function trendsColInit(window){
                 return;
             }
             if(a.getTrendsColumn() === false) {
-                var col = new TD.components.OpenColumn;
-                col.go('add', ['trends'], '', {});
-                var trendsCol = a.getLoadingColumn();
-                trendsCol.model.setTitle('Trends: United Kingdom');
-                TD.controller.columnManager.addColumnToUI(trendsCol);
+                var account = TD.storage.accountController.getPreferredAccount("twitter"),
+                accountKey = account.getKey()
+                var col = TD.controller.columnManager.makeColumnFor('other', 'twitter', accountKey, undefined);
+                col.model.setTitle('Trends: United Kingdom');
+                TD.controller.columnManager.addColumnToUI(col);
             }
             var woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
             a.setTrendLocationWoeid(woeid);
