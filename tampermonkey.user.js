@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3.1
+// @version      2.1.3.2
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -22,8 +22,527 @@ function trendsColInit(window){
         location = 23424975,
         filters = [],
         scheduledUpdates = [],
-        trendItem = '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"></header><div class="tweet-body"><p></p><footer></footer></div><i class="sprite tweet-dogear"></i></div></div></article>',
-        trendSelector = $('<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" id="trend-location" style="width: 190px;"><option value="1">Worldwide</option><option value="23424747">Argentina</option><option value="468739">&nbsp;&nbsp;&nbsp;&nbsp;Buenos Aires</option><option value="23424748">Australia</option><option value="1105779">&nbsp;&nbsp;&nbsp;&nbsp;Sydney</option><option value="23424768">Brazil</option><option value="455819">&nbsp;&nbsp;&nbsp;&nbsp;Bras&iacute;lia</option><option value="455830">&nbsp;&nbsp;&nbsp;&nbsp;Fortaleza</option><option value="455833">&nbsp;&nbsp;&nbsp;&nbsp;Manaus</option><option value="455825">&nbsp;&nbsp;&nbsp;&nbsp;Rio de Janeiro</option><option value="455826">&nbsp;&nbsp;&nbsp;&nbsp;Salvador</option><option value="455827">&nbsp;&nbsp;&nbsp;&nbsp;S&atilde;o Paulo</option><option value="23424775">Canada</option><option value="3534">&nbsp;&nbsp;&nbsp;&nbsp;Montreal</option><option value="4118">&nbsp;&nbsp;&nbsp;&nbsp;Toronto</option><option value="9807">&nbsp;&nbsp;&nbsp;&nbsp;Vancouver</option><option value="23424782">Chile</option><option value="349859">&nbsp;&nbsp;&nbsp;&nbsp;Santiago</option><option value="23424787">Colombia</option><option value="368148">&nbsp;&nbsp;&nbsp;&nbsp;Bogot&aacute;</option><option value="23424800">Dominican Republic</option><option value="76456">&nbsp;&nbsp;&nbsp;&nbsp;Santo Domingo</option><option value="23424801">Ecuador</option><option value="23424819">France</option><option value="609125">&nbsp;&nbsp;&nbsp;&nbsp;Lyon</option><option value="610264">&nbsp;&nbsp;&nbsp;&nbsp;Marseille</option><option value="615702">&nbsp;&nbsp;&nbsp;&nbsp;Paris</option><option value="23424829">Germany</option><option value="638242">&nbsp;&nbsp;&nbsp;&nbsp;Berlin</option><option value="656958">&nbsp;&nbsp;&nbsp;&nbsp;Hamburg</option><option value="676757">&nbsp;&nbsp;&nbsp;&nbsp;Munich</option><option value="23424834">Guatemala</option><option value="23424848">India</option><option value="2295402">&nbsp;&nbsp;&nbsp;&nbsp;Ahmedabad</option><option value="2295420">&nbsp;&nbsp;&nbsp;&nbsp;Bangalore</option><option value="2295424">&nbsp;&nbsp;&nbsp;&nbsp;Chennai</option><option value="20070458">&nbsp;&nbsp;&nbsp;&nbsp;Delhi</option><option value="2295414">&nbsp;&nbsp;&nbsp;&nbsp;Hyderabad</option><option value="2295411">&nbsp;&nbsp;&nbsp;&nbsp;Mumbai</option><option value="23424846">Indonesia</option><option value="1047180">&nbsp;&nbsp;&nbsp;&nbsp;Bandung</option><option value="1030077">&nbsp;&nbsp;&nbsp;&nbsp;Bekasi</option><option value="1047378">&nbsp;&nbsp;&nbsp;&nbsp;Jakarta</option><option value="1044316">&nbsp;&nbsp;&nbsp;&nbsp;Surabaya</option><option value="23424803">Ireland</option><option value="560743">&nbsp;&nbsp;&nbsp;&nbsp;Dublin</option><option value="23424853">Italy</option><option value="23424856">Japan</option><option value="1117099">&nbsp;&nbsp;&nbsp;&nbsp;Fukuoka</option><option value="15015372">&nbsp;&nbsp;&nbsp;&nbsp;Kyoto</option><option value="1117817">&nbsp;&nbsp;&nbsp;&nbsp;Nagoya</option><option value="2345896">&nbsp;&nbsp;&nbsp;&nbsp;Okinawa</option><option value="15015370">&nbsp;&nbsp;&nbsp;&nbsp;Osaka</option><option value="1118108">&nbsp;&nbsp;&nbsp;&nbsp;Sapporo</option><option value="1118129">&nbsp;&nbsp;&nbsp;&nbsp;Sendai</option><option value="1118285">&nbsp;&nbsp;&nbsp;&nbsp;Takamatsu</option><option value="1118370">&nbsp;&nbsp;&nbsp;&nbsp;Tokyo</option><option value="23424901">Malaysia</option><option value="1154726">&nbsp;&nbsp;&nbsp;&nbsp;Klang</option><option value="1154781">&nbsp;&nbsp;&nbsp;&nbsp;Kuala Lumpur</option><option value="23424900">Mexico</option><option value="116545">&nbsp;&nbsp;&nbsp;&nbsp;Mexico City</option><option value="134047">&nbsp;&nbsp;&nbsp;&nbsp;Monterrey</option><option value="23424909">Netherlands</option><option value="727232">&nbsp;&nbsp;&nbsp;&nbsp;Amsterdam</option><option value="726874">&nbsp;&nbsp;&nbsp;&nbsp;Den Haag</option><option value="733075">&nbsp;&nbsp;&nbsp;&nbsp;Rotterdam</option><option value="23424916">New Zealand</option><option value="23424908">Nigeria</option><option value="1398823">&nbsp;&nbsp;&nbsp;&nbsp;Lagos</option><option value="23424922">Pakistan</option><option value="23424919">Peru</option><option value="418440">&nbsp;&nbsp;&nbsp;&nbsp;Lima</option><option value="23424934">Philippines</option><option value="1199477">&nbsp;&nbsp;&nbsp;&nbsp;Manila</option><option value="1199682">&nbsp;&nbsp;&nbsp;&nbsp;Quezon City</option><option value="23424936">Russia</option><option value="2122265">&nbsp;&nbsp;&nbsp;&nbsp;Moscow</option><option value="2122541">&nbsp;&nbsp;&nbsp;&nbsp;Novosibirsk</option><option value="2123260">&nbsp;&nbsp;&nbsp;&nbsp;Saint Petersburg</option><option value="23424948">Singapore</option><option value="23424942">South Africa</option><option value="1582504">&nbsp;&nbsp;&nbsp;&nbsp;Johannesburg</option><option value="23424950">Spain</option><option value="753692">&nbsp;&nbsp;&nbsp;&nbsp;Barcelona</option><option value="766273">&nbsp;&nbsp;&nbsp;&nbsp;Madrid</option><option value="23424954">Sweden</option><option value="906057">&nbsp;&nbsp;&nbsp;&nbsp;Stockholm</option><option value="23424969">Turkey</option><option value="2343732">&nbsp;&nbsp;&nbsp;&nbsp;Ankara</option><option value="2344116">&nbsp;&nbsp;&nbsp;&nbsp;Istanbul</option><option value="2344117">&nbsp;&nbsp;&nbsp;&nbsp;Izmir</option><option value="23424738">United Arab Emirates</option><option value="23424975" selected="selected">United Kingdom</option><option value="12723">&nbsp;&nbsp;&nbsp;&nbsp;Birmingham</option><option value="21125">&nbsp;&nbsp;&nbsp;&nbsp;Glasgow</option><option value="44418">&nbsp;&nbsp;&nbsp;&nbsp;London</option><option value="28218">&nbsp;&nbsp;&nbsp;&nbsp;Manchester</option><option value="23424977">United States</option><option value="2357024">&nbsp;&nbsp;&nbsp;&nbsp;Atlanta</option><option value="2357536">&nbsp;&nbsp;&nbsp;&nbsp;Austin</option><option value="2358820">&nbsp;&nbsp;&nbsp;&nbsp;Baltimore</option><option value="2359991">&nbsp;&nbsp;&nbsp;&nbsp;Baton Rouge</option><option value="2364559">&nbsp;&nbsp;&nbsp;&nbsp;Birmingham</option><option value="2367105">&nbsp;&nbsp;&nbsp;&nbsp;Boston</option><option value="2378426">&nbsp;&nbsp;&nbsp;&nbsp;Charlotte</option><option value="2379574">&nbsp;&nbsp;&nbsp;&nbsp;Chicago</option><option value="2380358">&nbsp;&nbsp;&nbsp;&nbsp;Cincinnati</option><option value="2381475">&nbsp;&nbsp;&nbsp;&nbsp;Cleveland</option><option value="2383660">&nbsp;&nbsp;&nbsp;&nbsp;Columbus</option><option value="2388929">&nbsp;&nbsp;&nbsp;&nbsp;Dallas-Ft. Worth</option><option value="2391279">&nbsp;&nbsp;&nbsp;&nbsp;Denver</option><option value="2391585">&nbsp;&nbsp;&nbsp;&nbsp;Detroit</option><option value="2414469">&nbsp;&nbsp;&nbsp;&nbsp;Greensboro</option><option value="2418046">&nbsp;&nbsp;&nbsp;&nbsp;Harrisburg</option><option value="2424766">&nbsp;&nbsp;&nbsp;&nbsp;Houston</option><option value="2427032">&nbsp;&nbsp;&nbsp;&nbsp;Indianapolis</option><option value="2428184">&nbsp;&nbsp;&nbsp;&nbsp;Jackson</option><option value="2436704">&nbsp;&nbsp;&nbsp;&nbsp;Las Vegas</option><option value="2442047">&nbsp;&nbsp;&nbsp;&nbsp;Los Angeles</option><option value="2449323">&nbsp;&nbsp;&nbsp;&nbsp;Memphis</option><option value="2450022">&nbsp;&nbsp;&nbsp;&nbsp;Miami</option><option value="2451822">&nbsp;&nbsp;&nbsp;&nbsp;Milwaukee</option><option value="2452078">&nbsp;&nbsp;&nbsp;&nbsp;Minneapolis</option><option value="2457170">&nbsp;&nbsp;&nbsp;&nbsp;Nashville</option><option value="2458410">&nbsp;&nbsp;&nbsp;&nbsp;New Haven</option><option value="2458833">&nbsp;&nbsp;&nbsp;&nbsp;New Orleans</option><option value="2459115">&nbsp;&nbsp;&nbsp;&nbsp;New York</option><option value="2460389">&nbsp;&nbsp;&nbsp;&nbsp;Norfolk</option><option value="2466256">&nbsp;&nbsp;&nbsp;&nbsp;Orlando</option><option value="2471217">&nbsp;&nbsp;&nbsp;&nbsp;Philadelphia</option><option value="2471390">&nbsp;&nbsp;&nbsp;&nbsp;Phoenix</option><option value="2473224">&nbsp;&nbsp;&nbsp;&nbsp;Pittsburgh</option><option value="2475687">&nbsp;&nbsp;&nbsp;&nbsp;Portland</option><option value="2477058">&nbsp;&nbsp;&nbsp;&nbsp;Providence</option><option value="2478307">&nbsp;&nbsp;&nbsp;&nbsp;Raleigh</option><option value="2480894">&nbsp;&nbsp;&nbsp;&nbsp;Richmond</option><option value="2486340">&nbsp;&nbsp;&nbsp;&nbsp;Sacramento</option><option value="2487610">&nbsp;&nbsp;&nbsp;&nbsp;Salt Lake City</option><option value="2487796">&nbsp;&nbsp;&nbsp;&nbsp;San Antonio</option><option value="2487889">&nbsp;&nbsp;&nbsp;&nbsp;San Diego</option><option value="2487956">&nbsp;&nbsp;&nbsp;&nbsp;San Francisco</option><option value="2490383">&nbsp;&nbsp;&nbsp;&nbsp;Seattle</option><option value="2486982">&nbsp;&nbsp;&nbsp;&nbsp;St. Louis</option><option value="2503713">&nbsp;&nbsp;&nbsp;&nbsp;Tallahassee</option><option value="2503863">&nbsp;&nbsp;&nbsp;&nbsp;Tampa</option><option value="2514815">&nbsp;&nbsp;&nbsp;&nbsp;Washington</option><option value="23424982">Venezuela</option><option value="468382">&nbsp;&nbsp;&nbsp;&nbsp;Barquisimeto</option><option value="395269">&nbsp;&nbsp;&nbsp;&nbsp;Caracas</option><option value="395270">&nbsp;&nbsp;&nbsp;&nbsp;Maracaibo</option><option value="395272">&nbsp;&nbsp;&nbsp;&nbsp;Valencia</option></select></div></div>');
+        trendLocations = [{
+            "name": "Argentina",
+            "woeid": 23424747,
+            "children": [{
+                "name": "Buenos Aires",
+                "woeid": 468739
+            }]
+        }, {
+            "name": "Australia",
+            "woeid": 23424748,
+            "children": [{
+                "name": "Sydney",
+                "woeid": 1105779
+            }]
+        }, {
+            "name": "Brazil",
+            "woeid": 23424768,
+            "children": [{
+                "name": "Brasília",
+                "woeid": 455819
+            }, {
+                "name": "Fortaleza",
+                "woeid": 455830
+            }, {
+                "name": "Manaus",
+                "woeid": 455833
+            }, {
+                "name": "Rio de Janeiro",
+                "woeid": 455825
+            }, {
+                "name": "Salvador",
+                "woeid": 455826
+            }, {
+                "name": "São Paulo",
+                "woeid": 455827
+            }]
+        }, {
+            "name": "Canada",
+            "woeid": 23424775,
+            "children": [{
+                "name": "Montreal",
+                "woeid": 3534
+            }, {
+                "name": "Toronto",
+                "woeid": 4118
+            }, {
+                "name": "Vancouver",
+                "woeid": 9807
+            }]
+        }, {
+            "name": "Chile",
+            "woeid": 23424782,
+            "children": [{
+                "name": "Santiago",
+                "woeid": 349859
+            }]
+        }, {
+            "name": "Colombia",
+            "woeid": 23424787,
+            "children": [{
+                "name": "Bogotá",
+                "woeid": 368148
+            }]
+        }, {
+            "name": "Dominican Republic",
+            "woeid": 23424800,
+            "children": [{
+                "name": "Santo Domingo",
+                "woeid": 76456
+            }]
+        }, {
+            "name": "Ecuador",
+            "woeid": 23424801
+        }, {
+            "name": "France",
+            "woeid": 23424819,
+            "children": [{
+                "name": "Lyon",
+                "woeid": 609125
+            }, {
+                "name": "Marseille",
+                "woeid": 610264
+            }, {
+                "name": "Paris",
+                "woeid": 615702
+            }]
+        }, {
+            "name": "Germany",
+            "woeid": 23424829,
+            "children": [{
+                "name": "Berlin",
+                "woeid": 638242
+            }, {
+                "name": "Hamburg",
+                "woeid": 656958
+            }, {
+                "name": "Munich",
+                "woeid": 676757
+            }]
+        }, {
+            "name": "Guatemala",
+            "woeid": 23424834
+        }, {
+            "name": "India",
+            "woeid": 23424848,
+            "children": [{
+                "name": "Ahmedabad",
+                "woeid": 2295402
+            }, {
+                "name": "Bangalore",
+                "woeid": 2295420
+            }, {
+                "name": "Chennai",
+                "woeid": 2295424
+            }, {
+                "name": "Delhi",
+                "woeid": 20070458
+            }, {
+                "name": "Hyderabad",
+                "woeid": 2295414
+            }, {
+                "name": "Mumbai",
+                "woeid": 2295411
+            }]
+        }, {
+            "name": "Indonesia",
+            "woeid": 23424846,
+            "children": [{
+                "name": "Bandung",
+                "woeid": 1047180
+            }, {
+                "name": "Bekasi",
+                "woeid": 1030077
+            }, {
+                "name": "Jakarta",
+                "woeid": 1047378
+            }, {
+                "name": "Surabaya",
+                "woeid": 1044316
+            }]
+        }, {
+            "name": "Ireland",
+            "woeid": 23424803,
+            "children": [{
+                "name": "Dublin",
+                "woeid": 560743
+            }]
+        }, {
+            "name": "Italy",
+            "woeid": 23424853
+        }, {
+            "name": "Japan",
+            "woeid": 23424856,
+            "children": [{
+                "name": "Fukuoka",
+                "woeid": 1117099
+            }, {
+                "name": "Kyoto",
+                "woeid": 15015372
+            }, {
+                "name": "Nagoya",
+                "woeid": 1117817
+            }, {
+                "name": "Okinawa",
+                "woeid": 2345896
+            }, {
+                "name": "Osaka",
+                "woeid": 15015370
+            }, {
+                "name": "Sapporo",
+                "woeid": 1118108
+            }, {
+                "name": "Sendai",
+                "woeid": 1118129
+            }, {
+                "name": "Takamatsu",
+                "woeid": 1118285
+            }, {
+                "name": "Tokyo",
+                "woeid": 1118370
+            }]
+        }, {
+            "name": "Korea",
+            "woeid": 23424868
+        }, {
+            "name": "Malaysia",
+            "woeid": 23424901,
+            "children": [{
+                "name": "Klang",
+                "woeid": 1154726
+            }, {
+                "name": "Kuala Lumpur",
+                "woeid": 1154781
+            }]
+        }, {
+            "name": "Mexico",
+            "woeid": 23424900,
+            "children": [{
+                "name": "Mexico City",
+                "woeid": 116545
+            }, {
+                "name": "Monterrey",
+                "woeid": 134047
+            }]
+        }, {
+            "name": "Netherlands",
+            "woeid": 23424909,
+            "children": [{
+                "name": "Amsterdam",
+                "woeid": 727232
+            }, {
+                "name": "Den Haag",
+                "woeid": 726874
+            }, {
+                "name": "Rotterdam",
+                "woeid": 733075
+            }]
+        }, {
+            "name": "New Zealand",
+            "woeid": 23424916
+        }, {
+            "name": "Nigeria",
+            "woeid": 23424908,
+            "children": [{
+                "name": "Lagos",
+                "woeid": 1398823
+            }]
+        }, {
+            "name": "Pakistan",
+            "woeid": 23424922
+        }, {
+            "name": "Peru",
+            "woeid": 23424919,
+            "children": [{
+                "name": "Lima",
+                "woeid": 418440
+            }]
+        }, {
+            "name": "Philippines",
+            "woeid": 23424934,
+            "children": [{
+                "name": "Manila",
+                "woeid": 1199477
+            }, {
+                "name": "Quezon City",
+                "woeid": 1199682
+            }]
+        }, {
+            "name": "Russia",
+            "woeid": 23424936,
+            "children": [{
+                "name": "Moscow",
+                "woeid": 2122265
+            }, {
+                "name": "Novosibirsk",
+                "woeid": 2122541
+            }, {
+                "name": "Saint Petersburg",
+                "woeid": 2123260
+            }]
+        }, {
+            "name": "Singapore",
+            "woeid": 23424948
+        }, {
+            "name": "South Africa",
+            "woeid": 23424942,
+            "children": [{
+                "name": "Johannesburg",
+                "woeid": 1582504
+            }]
+        }, {
+            "name": "Spain",
+            "woeid": 23424950,
+            "children": [{
+                "name": "Barcelona",
+                "woeid": 753692
+            }, {
+                "name": "Madrid",
+                "woeid": 766273
+            }]
+        }, {
+            "name": "Sweden",
+            "woeid": 23424954,
+            "children": [{
+                "name": "Stockholm",
+                "woeid": 906057
+            }]
+        }, {
+            "name": "Turkey",
+            "woeid": 23424969,
+            "children": [{
+                "name": "Ankara",
+                "woeid": 2343732
+            }, {
+                "name": "Istanbul",
+                "woeid": 2344116
+            }, {
+                "name": "Izmir",
+                "woeid": 2344117
+            }]
+        }, {
+            "name": "United Arab Emirates",
+            "woeid": 23424738
+        }, {
+            "name": "United Kingdom",
+            "woeid": 23424975,
+            "children": [{
+                "name": "Belfast",
+                "woeid": 44544
+            }, {
+                "name": "Birmingham",
+                "woeid": 12723
+            }, {
+                "name": "Brighton",
+                "woeid": 13911
+            }, {
+                "name": "Bristol",
+                "woeid": 13963
+            }, {
+                "name": "Cardiff",
+                "woeid": 15127
+            }, {
+                "name": "Edinburgh",
+                "woeid": 19344
+            }, {
+                "name": "Glasgow",
+                "woeid": 21125
+            }, {
+                "name": "Leeds",
+                "woeid": 26042
+            }, {
+                "name": "Leicester",
+                "woeid": 26062
+            }, {
+                "name": "Liverpool",
+                "woeid": 26734
+            }, {
+                "name": "London",
+                "woeid": 44418
+            }, {
+                "name": "Manchester",
+                "woeid": 28218
+            }, {
+                "name": "Newcastle",
+                "woeid": 30079
+            }, {
+                "name": "Nottingham",
+                "woeid": 30720
+            }, {
+                "name": "Portsmouth",
+                "woeid": 32452
+            }, {
+                "name": "Sheffield",
+                "woeid": 34503
+            }]
+        }, {
+            "name": "United States",
+            "woeid": 23424977,
+            "children": [{
+                "name": "Atlanta",
+                "woeid": 2357024
+            }, {
+                "name": "Austin",
+                "woeid": 2357536
+            }, {
+                "name": "Baltimore",
+                "woeid": 2358820
+            }, {
+                "name": "Baton Rouge",
+                "woeid": 2359991
+            }, {
+                "name": "Birmingham",
+                "woeid": 2364559
+            }, {
+                "name": "Boston",
+                "woeid": 2367105
+            }, {
+                "name": "Charlotte",
+                "woeid": 2378426
+            }, {
+                "name": "Chicago",
+                "woeid": 2379574
+            }, {
+                "name": "Cincinnati",
+                "woeid": 2380358
+            }, {
+                "name": "Cleveland",
+                "woeid": 2381475
+            }, {
+                "name": "Columbus",
+                "woeid": 2383660
+            }, {
+                "name": "Dallas-Ft. Worth",
+                "woeid": 2388929
+            }, {
+                "name": "Denver",
+                "woeid": 2391279
+            }, {
+                "name": "Detroit",
+                "woeid": 2391585
+            }, {
+                "name": "Greensboro",
+                "woeid": 2414469
+            }, {
+                "name": "Harrisburg",
+                "woeid": 2418046
+            }, {
+                "name": "Houston",
+                "woeid": 2424766
+            }, {
+                "name": "Indianapolis",
+                "woeid": 2427032
+            }, {
+                "name": "Jackson",
+                "woeid": 2428184
+            }, {
+                "name": "Las Vegas",
+                "woeid": 2436704
+            }, {
+                "name": "Los Angeles",
+                "woeid": 2442047
+            }, {
+                "name": "Memphis",
+                "woeid": 2449323
+            }, {
+                "name": "Miami",
+                "woeid": 2450022
+            }, {
+                "name": "Milwaukee",
+                "woeid": 2451822
+            }, {
+                "name": "Minneapolis",
+                "woeid": 2452078
+            }, {
+                "name": "Nashville",
+                "woeid": 2457170
+            }, {
+                "name": "New Haven",
+                "woeid": 2458410
+            }, {
+                "name": "New Orleans",
+                "woeid": 2458833
+            }, {
+                "name": "New York",
+                "woeid": 2459115
+            }, {
+                "name": "Norfolk",
+                "woeid": 2460389
+            }, {
+                "name": "Orlando",
+                "woeid": 2466256
+            }, {
+                "name": "Philadelphia",
+                "woeid": 2471217
+            }, {
+                "name": "Phoenix",
+                "woeid": 2471390
+            }, {
+                "name": "Pittsburgh",
+                "woeid": 2473224
+            }, {
+                "name": "Portland",
+                "woeid": 2475687
+            }, {
+                "name": "Providence",
+                "woeid": 2477058
+            }, {
+                "name": "Raleigh",
+                "woeid": 2478307
+            }, {
+                "name": "Richmond",
+                "woeid": 2480894
+            }, {
+                "name": "Sacramento",
+                "woeid": 2486340
+            }, {
+                "name": "Salt Lake City",
+                "woeid": 2487610
+            }, {
+                "name": "San Antonio",
+                "woeid": 2487796
+            }, {
+                "name": "San Diego",
+                "woeid": 2487889
+            }, {
+                "name": "San Francisco",
+                "woeid": 2487956
+            }, {
+                "name": "Seattle",
+                "woeid": 2490383
+            }, {
+                "name": "St. Louis",
+                "woeid": 2486982
+            }, {
+                "name": "Tallahassee",
+                "woeid": 2503713
+            }, {
+                "name": "Tampa",
+                "woeid": 2503863
+            }, {
+                "name": "Washington",
+                "woeid": 2514815
+            }]
+        }, {
+            "name": "Venezuela",
+            "woeid": 23424982,
+            "children": [{
+                "name": "Barquisimeto",
+                "woeid": 468382
+            }, {
+                "name": "Caracas",
+                "woeid": 395269
+            }, {
+                "name": "Maracaibo",
+                "woeid": 395270
+            }, {
+                "name": "Valencia",
+                "woeid": 395272
+            }]
+        }];
+        trendItem = '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"></header><div class="tweet-body"><p></p><footer></footer></div><i class="sprite tweet-dogear"></i></div></div></article>';
         a.getAllColumns = function() {
             return TD.controller.columnManager.getAllOrdered();
         }
@@ -87,25 +606,52 @@ function trendsColInit(window){
                 col.model.setTitle('Trends: United Kingdom');
                 TD.controller.columnManager.addColumnToUI(col);
             }
-            var woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
-            a.setTrendLocationWoeid(woeid);
-            
             var column = a.getJTrendsColumn();
-            if(column !== false) {
-                column.parents('section').first().css({'border-radius': '5px'});
-                addTrendLocationSelector(column);
-                addUpdater(column);
-                a.update();
-                
-                handle = TD.storage.accountController.getPreferredAccount().getUsername();
-                trackGoogleAnalytics();
-            }
+            populateContent(column, trendLocations);
         }
         a.setFilters = function(filterArr) {
             filters = filterArr;
         }
         a.getFilters = function() {
             return filters;
+        }
+        var populateContent = function(column, jsonLocations) {
+            //Get selector html
+            var html, country, city, i, j;
+            html = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" id="trend-location" style="width: 190px;"><option value="1">Worldwide</option>'
+            for (i in jsonLocations) {
+                country = jsonLocations[i];
+                html += '<option value="' +country.woeid +'">' +country.name +'</option>';
+                for (j in country.children) {
+                    city = country.children[j];
+                    html += '<option value="' +city.woeid +'">&nbsp;&nbsp;&nbsp;&nbsp;' +city.name +'</option>';
+                }
+            }
+            html += '</select></div></div>';
+
+            //Add selector to body
+            var column = a.getJTrendsColumn();
+            column.find('.column-options').after(html).end().find('.column-scroller').css({'margin-top': '50px'});
+
+            var trendSelector = $('#trend-location'),
+                woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
+            a.setTrendLocationWoeid(woeid);
+
+            trendSelector.val(a.getTrendLocationWoeid()).off('hover change mouseover mouseout').change(function(){
+                $(this).find('option:selected').each(function(){
+                    var loc = $(this);
+                    a.setTrendLocationWoeid(loc.val());
+                    a.setTitle($.trim(loc.text()));
+                    a.update();
+                });
+            });
+
+            column.parents('section').first().css({'border-radius': '5px'});
+            addUpdater(column);
+            a.update();
+
+            handle = TD.storage.accountController.getPreferredAccount().getUsername();
+            trackGoogleAnalytics();
         }
         var getGlobalTextContentFilters = function() {
             var i,
@@ -133,17 +679,6 @@ function trendsColInit(window){
                 return;
             }
         }
-        var addTrendLocationSelector = function(column) {
-            column.find('.column-options').after(trendSelector).end().find('.column-scroller').css({'margin-top': '50px'});
-            $('#trend-location').val(a.getTrendLocationWoeid()).off('hover change mouseover mouseout').change(function(){
-                $(this).find('option:selected').each(function(){
-                    var loc = $(this);
-                    a.setTrendLocationWoeid(loc.val());
-                    a.setTitle($.trim(loc.text()));
-                    a.update();
-                });
-            });
-        }
         var addUpdater = function(column) {
             var updaterHtml = '<div id="update-countdown" style="height: 14px; position: absolute; bottom: 0; left: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><a href="#" id="update-now" style="float: right;">Update now</a></div>';
             column.find('.column-scroller').css({'margin-bottom': '26px'}).after(updaterHtml);
@@ -156,7 +691,7 @@ function trendsColInit(window){
             var column = a.getJTrendsColumn();
             if(column !== false){
                 var content = column.find('.column-scroller');
-                content.empty();            
+                content.empty();
                 var d = $('.js-search-form'), f, textFilter = getGlobalTextContentFilters();
                 $.ajax({
                     url: 'https://api.twitter.com/1/trends/' +a.getTrendLocationWoeid() +'.json',
@@ -209,7 +744,7 @@ function trendsColInit(window){
                                         }
                                     });
                                 }
-                            });          
+                            });
                             content.append(t);
                         });
                         var update = setTimeout((function() { a.update(); }), a.getRefreshTime());
