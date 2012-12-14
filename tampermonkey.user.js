@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3.2
+// @version      2.1.3.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -28,11 +28,38 @@ function trendsColInit(window){
             "children": [{
                 "name": "Buenos Aires",
                 "woeid": 468739
+            }, {
+                "name": "Córdoba",
+                "woeid": 466861
+            }, {
+                "name": "Mendoza",
+                "woeid": 332471
+            }, {
+                "name": "Rosario",
+                "woeid": 466862
             }]
         }, {
             "name": "Australia",
             "woeid": 23424748,
             "children": [{
+                "name": "Adelaide",
+                "woeid": 1099805
+            }, {
+                "name": "Brisbane",
+                "woeid": 1100661
+            }, {
+                "name": "Canberra",
+                "woeid": 1100968
+            }, {
+                "name": "Darwin",
+                "woeid": 1101597
+            }, {
+                "name": "Melbourne",
+                "woeid": 1103816
+            }, {
+                "name": "Perth",
+                "woeid": 1098081
+            }, {
                 "name": "Sydney",
                 "woeid": 1105779
             }]
@@ -40,20 +67,47 @@ function trendsColInit(window){
             "name": "Brazil",
             "woeid": 23424768,
             "children": [{
+                "name": "Belo Horizonte",
+                "woeid": 455821
+            }, {
+                "name": "Belém",
+                "woeid": 455820
+            }, {
                 "name": "Brasília",
                 "woeid": 455819
+            }, {
+                "name": "Campinas",
+                "woeid": 455828
+            }, {
+                "name": "Curitiba",
+                "woeid": 455822
             }, {
                 "name": "Fortaleza",
                 "woeid": 455830
             }, {
+                "name": "Goiânia",
+                "woeid": 455831
+            }, {
+                "name": "Guarulhos",
+                "woeid": 455867
+            }, {
                 "name": "Manaus",
                 "woeid": 455833
+            }, {
+                "name": "Porto Alegre",
+                "woeid": 455823
+            }, {
+                "name": "Recife",
+                "woeid": 455824
             }, {
                 "name": "Rio de Janeiro",
                 "woeid": 455825
             }, {
                 "name": "Salvador",
                 "woeid": 455826
+            }, {
+                "name": "São Luís",
+                "woeid": 455834
             }, {
                 "name": "São Paulo",
                 "woeid": 455827
@@ -62,21 +116,42 @@ function trendsColInit(window){
             "name": "Canada",
             "woeid": 23424775,
             "children": [{
+                "name": "Calgary",
+                "woeid": 8775
+            }, {
+                "name": "Edmonton",
+                "woeid": 8676
+            }, {
                 "name": "Montreal",
                 "woeid": 3534
+            }, {
+                "name": "Ottawa",
+                "woeid": 3369
+            }, {
+                "name": "Quebec",
+                "woeid": 2344924
             }, {
                 "name": "Toronto",
                 "woeid": 4118
             }, {
                 "name": "Vancouver",
                 "woeid": 9807
+            }, {
+                "name": "Winnipeg",
+                "woeid": 2972
             }]
         }, {
             "name": "Chile",
             "woeid": 23424782,
             "children": [{
+                "name": "Concepcion",
+                "woeid": 349860
+            }, {
                 "name": "Santiago",
                 "woeid": 349859
+            }, {
+                "name": "Valparaiso",
+                "woeid": 349861
             }]
         }, {
             "name": "Colombia",
@@ -99,14 +174,35 @@ function trendsColInit(window){
             "name": "France",
             "woeid": 23424819,
             "children": [{
+                "name": "Bordeaux",
+                "woeid": 580778
+            }, {
+                "name": "Lille",
+                "woeid": 608105
+            }, {
                 "name": "Lyon",
                 "woeid": 609125
             }, {
                 "name": "Marseille",
                 "woeid": 610264
             }, {
+                "name": "Montpellier",
+                "woeid": 612977
+            }, {
+                "name": "Nantes",
+                "woeid": 613858
+            }, {
                 "name": "Paris",
                 "woeid": 615702
+            }, {
+                "name": "Rennes",
+                "woeid": 619163
+            }, {
+                "name": "Strasbourg",
+                "woeid": 627791
+            }, {
+                "name": "Toulouse",
+                "woeid": 628886
             }]
         }, {
             "name": "Germany",
@@ -115,11 +211,38 @@ function trendsColInit(window){
                 "name": "Berlin",
                 "woeid": 638242
             }, {
+                "name": "Bremen",
+                "woeid": 641142
+            }, {
+                "name": "Cologne",
+                "woeid": 667931
+            }, {
+                "name": "Dortmund",
+                "woeid": 645458
+            }, {
+                "name": "Dresden",
+                "woeid": 645686
+            }, {
+                "name": "Dusseldorf",
+                "woeid": 646099
+            }, {
+                "name": "Essen",
+                "woeid": 648820
+            }, {
+                "name": "Frankfurt",
+                "woeid": 650272
+            }, {
                 "name": "Hamburg",
                 "woeid": 656958
             }, {
+                "name": "Leipzig",
+                "woeid": 671072
+            }, {
                 "name": "Munich",
                 "woeid": 676757
+            }, {
+                "name": "Stuttgart",
+                "woeid": 698064
             }]
         }, {
             "name": "Guatemala",
