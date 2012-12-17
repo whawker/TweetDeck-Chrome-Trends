@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3.4
+// @version      2.1.3.5
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -431,19 +431,19 @@ function trendsColInit(window){
             "children": [{
                 "name": "Guadalajara",
                 "woeid": 124162
-            },{
+            }, {
                 "name": "León",
                 "woeid": 131068
-            },{
+            }, {
                 "name": "Mexico City",
                 "woeid": 116545
             }, {
                 "name": "Monterrey",
                 "woeid": 134047
-            }}, {
+            }, {
                 "name": "Puebla",
                 "woeid": 137612
-            }}, {
+            }, {
                 "name": "Tijuana",
                 "woeid": 149361
             }]
@@ -527,7 +527,7 @@ function trendsColInit(window){
             "children": [{
                 "name": "Singapore",
                 "woeid": 1062617
-            }
+            }]
         }, {
             "name": "South Africa",
             "woeid": 23424942,
