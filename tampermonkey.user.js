@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3.3
+// @version      2.1.3.4
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -254,6 +254,9 @@ function trendsColInit(window){
                 "name": "Ahmedabad",
                 "woeid": 2295402
             }, {
+                "name": "Amritsar",
+                "woeid": 2295388
+            }, {
                 "name": "Bangalore",
                 "woeid": 2295420
             }, {
@@ -266,8 +269,29 @@ function trendsColInit(window){
                 "name": "Hyderabad",
                 "woeid": 2295414
             }, {
+                "name": "Indore",
+                "woeid": 2295408
+            }, {
+                "name": "Jaipur",
+                "woeid": 2295401
+            }, {
+                "name": "Kanpur",
+                "woeid": 2295378
+            }, {
+                "name": "Kolkata",
+                "woeid": 2295386
+            }, {
+                "name": "Lucknow",
+                "woeid": 2295377
+            }, {
                 "name": "Mumbai",
                 "woeid": 2295411
+            }, {
+                "name": "Nagpur",
+                "woeid": 2282863
+            }, {
+                "name": "Pune",
+                "woeid": 2295412
             }]
         }, {
             "name": "Indonesia",
@@ -294,13 +318,41 @@ function trendsColInit(window){
             }]
         }, {
             "name": "Italy",
-            "woeid": 23424853
+            "woeid": 23424853,
+            "children": [{
+                "name": "Milan",
+                "woeid": 718345
+            }, {
+                "name": "Naples",
+                "woeid": 719258
+            }, {
+                "name": "Rome",
+                "woeid": 721943
+            }, {
+                "name": "Turin",
+                "woeid": 725003
+            }]
         }, {
             "name": "Japan",
             "woeid": 23424856,
             "children": [{
+                "name": "Chiba",
+                "woeid": 1117034
+            }, {
                 "name": "Fukuoka",
                 "woeid": 1117099
+            }, {
+                "name": "Hiroshima",
+                "woeid": 1117227
+            }, {
+                "name": "Kawasaki",
+                "woeid": 1117502
+            }, {
+                "name": "Kitakyushu",
+                "woeid": 1110809
+            }, {
+                "name": "Kobe",
+                "woeid": 1117545
             }, {
                 "name": "Kyoto",
                 "woeid": 15015372
@@ -325,29 +377,75 @@ function trendsColInit(window){
             }, {
                 "name": "Tokyo",
                 "woeid": 1118370
+            }, {
+                "name": "Yokohama",
+                "woeid": 1118550
             }]
         }, {
             "name": "Korea",
-            "woeid": 23424868
+            "woeid": 23424868,
+            "children": [{
+                "name": "Busan",
+                "woeid": 1132447
+            }, {
+                "name": "Daegu",
+                "woeid": 2345975
+            }, {
+                "name": "Daejeon",
+                "woeid": 1132466
+            }, {
+                "name": "Gwangju",
+                "woeid": 1132481
+            }, {
+                "name": "Incheon",
+                "woeid": 1132496
+            }, {
+                "name": "Seoul",
+                "woeid": 1132599
+            }, {
+                "name": "Suwon",
+                "woeid": 1132567
+            }, {
+                "name": "Ulsan",
+                "woeid": 1132578
+            }]
         }, {
             "name": "Malaysia",
             "woeid": 23424901,
             "children": [{
+                "name": "Hulu Langat",
+                "woeid": 56013645
+            }, {
                 "name": "Klang",
                 "woeid": 1154726
             }, {
                 "name": "Kuala Lumpur",
                 "woeid": 1154781
+            }, {
+                "name": "Petaling",
+                "woeid": 56013632
             }]
         }, {
             "name": "Mexico",
             "woeid": 23424900,
             "children": [{
+                "name": "Guadalajara",
+                "woeid": 124162
+            },{
+                "name": "León",
+                "woeid": 131068
+            },{
                 "name": "Mexico City",
                 "woeid": 116545
             }, {
                 "name": "Monterrey",
                 "woeid": 134047
+            }}, {
+                "name": "Puebla",
+                "woeid": 137612
+            }}, {
+                "name": "Tijuana",
+                "woeid": 149361
             }]
         }, {
             "name": "Netherlands",
@@ -386,6 +484,12 @@ function trendsColInit(window){
             "name": "Philippines",
             "woeid": 23424934,
             "children": [{
+                "name": "Calocan",
+                "woeid": 1167715
+            }, {
+                "name": "Davao City",
+                "woeid": 1199136
+            }, {
                 "name": "Manila",
                 "woeid": 1199477
             }, {
@@ -399,15 +503,31 @@ function trendsColInit(window){
                 "name": "Moscow",
                 "woeid": 2122265
             }, {
+                "name": "Nizhny Novgorod",
+                "woeid": 2122471
+            }, {
                 "name": "Novosibirsk",
                 "woeid": 2122541
             }, {
+                "name": "Omsk",
+                "woeid": 2122641
+            }, {
                 "name": "Saint Petersburg",
                 "woeid": 2123260
+            }, {
+                "name": "Samara",
+                "woeid": 2077746
+            }, {
+                "name": "Yekaterinburg",
+                "woeid": 2112237
             }]
         }, {
             "name": "Singapore",
-            "woeid": 23424948
+            "woeid": 23424948,
+            "children": [{
+                "name": "Singapore",
+                "woeid": 1062617
+            }
         }, {
             "name": "South Africa",
             "woeid": 23424942,
@@ -424,6 +544,18 @@ function trendsColInit(window){
             }, {
                 "name": "Madrid",
                 "woeid": 766273
+            }, {
+                "name": "Malaga",
+                "woeid": 766356
+            }, {
+                "name": "Sevile",
+                "woeid": 774508
+            }, {
+                "name": "Valencia",
+                "woeid": 776688
+            }, {
+                "name": "Zaragoza",
+                "woeid": 779063
             }]
         }, {
             "name": "Sweden",
@@ -436,8 +568,14 @@ function trendsColInit(window){
             "name": "Turkey",
             "woeid": 23424969,
             "children": [{
+                "name": "Adana",
+                "woeid": 2343678
+            }, {
                 "name": "Ankara",
                 "woeid": 2343732
+            }, {
+                "name": "Bursa",
+                "woeid": 2343843
             }, {
                 "name": "Istanbul",
                 "woeid": 2344116
