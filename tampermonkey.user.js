@@ -1,12 +1,12 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.1.3.5
+// @version      2.4.0
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
 // @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.user.js
-// @copyright    2012+, William Hawker (willhawker.com)
+// @copyright    2013+, William Hawker (willhawker.com)
 // ==/UserScript==
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 var trendsColInterval = setInterval((function(){ if(typeof(unsafeWindow.TD) != 'undefined' && unsafeWindow.TD.ready === true) { clearInterval(trendsColInterval); trendsColInit(unsafeWindow) } }), 10);
@@ -889,15 +889,12 @@ function trendsColInit(window){
                 }
             }
             html += '</select></div></div>';
-
             //Add selector to body
             var column = a.getJTrendsColumn();
             column.find('.column-options').after(html).end().find('.column-scroller').css({'margin-top': '50px'});
-
             var trendSelector = $('#trend-location'),
                 woeid = $('option:contains("' +a.getTitle() +'")', trendSelector).val();
             a.setTrendLocationWoeid(woeid);
-
             trendSelector.val(a.getTrendLocationWoeid()).off('hover change mouseover mouseout').change(function(){
                 $(this).find('option:selected').each(function(){
                     var loc = $(this);
@@ -906,11 +903,9 @@ function trendsColInit(window){
                     a.update();
                 });
             });
-
             column.parents('section').first().css({'border-radius': '5px'});
             addUpdater(column);
             a.update();
-
             handle = TD.storage.accountController.getPreferredAccount().getUsername();
             trackGoogleAnalytics();
         }
@@ -951,9 +946,11 @@ function trendsColInit(window){
         $('body').on('TDTrendsColUpdate', function(e){
             var column = a.getJTrendsColumn();
             if(column !== false){
-                var content = column.find('.column-scroller');
-                content.empty();
-                var d = $('.js-search-form'), f, textFilter = getGlobalTextContentFilters();
+                var content = column.find('.column-scroller'),
+                    newContent = $(),
+                    d = $('.js-search-form'), 
+                    f, 
+                    textFilter = getGlobalTextContentFilters();
                 $.ajax({
                     url: 'https://api.twitter.com/1/trends/' +a.getTrendLocationWoeid() +'.json',
                     dataType: 'json',
@@ -1006,8 +1003,9 @@ function trendsColInit(window){
                                     });
                                 }
                             });
-                            content.append(t);
+                            newContent = newContent.add(t);
                         });
+                        content.empty().append(newContent);
                         var update = setTimeout((function() { a.update(); }), a.getRefreshTime());
                         //Add this timeout to the schedule
                         scheduledUpdates.push(update);
