@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.4.0
+// @version      2.6.0
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -879,7 +879,7 @@ function trendsColInit(window){
         var populateContent = function(column, jsonLocations) {
             //Get selector html
             var html, country, city, i, j;
-            html = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" id="trend-location" style="width: 190px;"><option value="1">Worldwide</option>'
+            html = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" id="trend-location" style="width: 190px;"><option value="0">Tailored Trends</option><option value="1">Worldwide</option>'
             for (i in jsonLocations) {
                 country = jsonLocations[i];
                 html += '<option value="' +country.woeid +'">' +country.name +'</option>';
@@ -905,6 +905,7 @@ function trendsColInit(window){
             });
             column.parents('section').first().css({'border-radius': '5px'});
             addUpdater(column);
+            addHiddenContainer(column);
             a.update();
             handle = TD.storage.accountController.getPreferredAccount().getUsername();
             trackGoogleAnalytics();
@@ -943,79 +944,126 @@ function trendsColInit(window){
                 a.update();
             });
         }
+        var addHiddenContainer = function(column) {
+            var hiddenHtml = '<div id="trend-column-info" style="height: 1px; padding-top: 1px; overflow:hidden;">&nbsp;</div>';
+            column.find('#update-countdown').after(hiddenHtml);
+        }
+        var populateTrendsCallback = function(column, trends) {
+            var content = column.find('.column-scroller'),
+                newContent = $(),
+                d = $('.js-search-form'),
+                f,
+                textFilter = getGlobalTextContentFilters();
+            $.each(trends, function(i, item) {
+                for (f in textFilter) {
+                    if((item.name).toLowerCase().indexOf(textFilter[f]) != -1) return 'continue'; //Hide this trend, continue to next loop iteration
+                }
+                var t = $(trendItem),
+                    tHeader = t.find('header'),
+                    tFooter = t.find('footer');
+                tHeader.append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
+                tFooter.load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-news .discover-item-content',  function(news, status, xhr) {
+                    if (status == 'success' && tFooter.children('div').size()) {
+                        tHeader.append('<span style="float: right">Show news story</span>');
+                        tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
+                        tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
+                            e.stopPropagation();
+                            e.preventDefault();
+                            var text = $(this).text();
+                            if(text.indexOf('Show') !== -1) {
+                                $(this).text('Hide news story');
+                                tFooter.children('div').slideDown();
+                            } else {
+                                $(this).text('Show news story');
+                                tFooter.children('div').slideUp();
+                            }
+                        });
+                        tFooter.find('.discover-item-image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
+                    } else {
+                        t.find('footer:empty').load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-item .events-card', function(eventStory, status, xhr) {
+                            if (status == 'success' && tFooter.children('div').size()) {
+                                tHeader.append('<span style="float: right">Show related event</span>');
+                                tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
+                                tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    var text = $(this).text();
+                                    if(text.indexOf('Show') !== -1) {
+                                        $(this).text('Hide related event');
+                                        tFooter.children('div').slideDown();
+                                    } else {
+                                        $(this).text('Show related event');
+                                        tFooter.children('div').slideUp();
+                                    }
+                                });
+                                tFooter.find('.image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
+                            }
+                        });
+                    }
+                });
+                newContent = newContent.add(t);
+            });
+            content.empty().append(newContent);
+            var update = setTimeout((function() { a.update(); }), a.getRefreshTime());
+            //Add this timeout to the schedule
+            scheduledUpdates.push(update);
+            return true;
+        }
         $('body').on('TDTrendsColUpdate', function(e){
             var column = a.getJTrendsColumn();
             if(column !== false){
-                var content = column.find('.column-scroller'),
-                    newContent = $(),
-                    d = $('.js-search-form'), 
-                    f, 
-                    textFilter = getGlobalTextContentFilters();
-                $.ajax({
-                    url: 'https://api.twitter.com/1/trends/' +a.getTrendLocationWoeid() +'.json',
-                    dataType: 'json',
-                    data: {},
-                    success: function(response) {
-                        $.each(response[0].trends, function(i, item) {
-                            for (f in textFilter) {
-                                if((item.name).toLowerCase().indexOf(textFilter[f]) != -1) return 'continue'; //Hide this trend, continue to next loop iteration
+                var woeid = a.getTrendLocationWoeid();
+                if (woeid > 0) {
+                    $.ajax({
+                        url: 'https://api.twitter.com/1/trends/' +woeid +'.json',
+                        dataType: 'json',
+                        data: {},
+                        success: function(response) {
+                            populateTrendsCallback(column, response[0].trends);
+                        },
+                        failure: function(response) {
+                            console.log(response);
+                            return false;
+                        }
+                    });
+                } else {
+                    var dataHolder = column.find('#trend-column-info');
+                    dataHolder.load('https://twitter.com/' +handle +' #init-data', function(response) {
+                        var rawJson = dataHolder.find('#init-data').val(),
+                            json = JSON.parse(rawJson),
+                            trendsCacheKey = json.trendsCacheKey;
+                        if (trendsCacheKey == null) {
+                            var content = column.find('.column-scroller');
+                            content.html('<div class="item-box" style="text-align: center;">Tailored Trends requires a logged in Twitter session.<br /><br />Please open <a href="https://twitter.com" target="_blank">another browser tab</a> and sign in on twitter.com, then click the <strong>\'Update now\'</strong> button below</p>');
+                            return;
+                        }
+                        $.ajax({
+                            url: 'https://twitter.com/trends',
+                            data: {
+                                k: trendsCacheKey,
+                                pc: 'true',
+                                src: 'module'
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                var trendsHtml = response.module_html,
+                                    trends = [],
+                                    trend;
+                                $(trendsHtml).find('ul.trend-items > li').each(function(index, elem) {
+                                    trend = {};
+                                    trend.name = $(elem).data('trend-name')
+                                    trend.url = $(elem).children('a').attr('href');
+                                    trends.push(trend);
+                                });
+                                populateTrendsCallback(column, trends);
+                            },
+                            failure: function(response) {
+                                console.log(response);
+                                return false;
                             }
-                            var t = $(trendItem),
-                                tHeader = t.find('header'),
-                                tFooter = t.find('footer');
-                            tHeader.append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
-                            tFooter.load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-news .discover-item-content',  function(news, status, xhr) {
-                                if (status == 'success' && tFooter.children('div').size()) {
-                                    tHeader.append('<span style="float: right">Show news story</span>');
-                                    tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
-                                    tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        var text = $(this).text();
-                                        if(text.indexOf('Show') !== -1) {
-                                            $(this).text('Hide news story');
-                                            tFooter.children('div').slideDown();
-                                        } else {
-                                            $(this).text('Show news story');
-                                            tFooter.children('div').slideUp();
-                                        }
-                                    });
-                                    tFooter.find('.discover-item-image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
-                                } else {
-                                    t.find('footer:empty').load('https://twitter.com/search?q="' +encodeURIComponent(item.name) +'" #timeline .content-header .discover-item .events-card', function(eventStory, status, xhr) {
-                                        if (status == 'success' && tFooter.children('div').size()) {
-                                            tHeader.append('<span style="float: right">Show related event</span>');
-                                            tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
-                                            tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
-                                                e.stopPropagation();
-                                                e.preventDefault();
-                                                var text = $(this).text();
-                                                if(text.indexOf('Show') !== -1) {
-                                                    $(this).text('Hide related event');
-                                                    tFooter.children('div').slideDown();
-                                                } else {
-                                                    $(this).text('Show related event');
-                                                    tFooter.children('div').slideUp();
-                                                }
-                                            });
-                                            tFooter.find('.image-wrapper').css({'float': 'right', 'margin': '0 0 5px 10px'});
-                                        }
-                                    });
-                                }
-                            });
-                            newContent = newContent.add(t);
                         });
-                        content.empty().append(newContent);
-                        var update = setTimeout((function() { a.update(); }), a.getRefreshTime());
-                        //Add this timeout to the schedule
-                        scheduledUpdates.push(update);
-                        return true;
-                    },
-                    failure: function(response) {
-                        console.log(response);
-                        return false;
-                    }
-                });
+                    });
+                }
             }
         });
         return a;
