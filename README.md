@@ -13,7 +13,7 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 
 ## Features
 
-1. Show trending topics for any region offered on the main Twitter site.
+1. Show trending topics for any region offered on the main Twitter site **and tailored trends!** (Requires simultaneous login on Twitter.com).
 2. Show news/events relating to the trending topic
 3. Shows most popular tweets for a search, rather than most recent
 4. Filter trending topics using the built in Global Filter
@@ -22,7 +22,7 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 
 **Obviously**, this requires the [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo) Google Chrome extension has been installed.
 
-Add the `tampermonkey.js` file as a new userscript
+Add the `tampermonkey.user.js` file as a new userscript
 
 **NOTE**, this method is only compatible with [web.tweetdeck.com](https://web.tweetdeck.com)
 
