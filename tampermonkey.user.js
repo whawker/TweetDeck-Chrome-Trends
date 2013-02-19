@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.6.0
+// @version      2.6.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -1014,18 +1014,24 @@ function trendsColInit(window){
             if(column !== false){
                 var woeid = a.getTrendLocationWoeid();
                 if (woeid > 0) {
-                    $.ajax({
-                        url: 'https://api.twitter.com/1/trends/' +woeid +'.json',
-                        dataType: 'json',
-                        data: {},
-                        success: function(response) {
-                            populateTrendsCallback(column, response[0].trends);
+                    var twitterClient = TD.controller.clients.getPreferredClient();
+                    twitterClient.makeTwitterCall(
+                        'https://api.twitter.com/1.1/trends/place.json',
+                        {id: woeid},
+                        'GET',
+                        true,
+                        function(response) {
+                            var trends = [];
+                            if(Object.prototype.toString.call(response) === '[object Array]' && ('trends' in response[0])) {
+                                trends = response[0].trends;
+                            } else {
+                                console.log('No trending topics retrieved');
+                            }
+                            populateTrendsCallback(column, trends);
                         },
-                        failure: function(response) {
-                            console.log(response);
-                            return false;
-                        }
-                    });
+                        function(){},
+                        function(){}
+                    );
                 } else {
                     var dataHolder = column.find('#trend-column-info');
                     dataHolder.load('https://twitter.com/' +handle +' #init-data', function(response) {
