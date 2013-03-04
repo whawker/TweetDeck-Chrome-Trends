@@ -13,10 +13,9 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 
 ## Features
 
-1. Show trending topics for any region offered on the main Twitter site **and tailored trends!** (Requires simultaneous login on Twitter.com).
-2. Show news/events relating to the trending topic
-3. Shows most popular tweets for a search, rather than most recent
-4. Filter trending topics using the built in Global Filter
+1. Show trending topics for **any region** offered on the main Twitter site ~~and tailored trends!~~ (Currently broken).
+2. Show news relating to the trending topic
+3. Filter trending topics using the built in Global Filter
 
 ## Installation Instructions (Tampermonkey)
 
@@ -29,8 +28,3 @@ Add the `tampermonkey.user.js` file as a new userscript
 ## Limitations/Future work
 
 1. Can only add one trends column
-3. Clicking on a trending topic only shows last ~10 tweets
-
-
-
-
