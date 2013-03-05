@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      2.6.2
+// @version      2.7
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -479,50 +479,71 @@ function trendsColInit(window){
                 },
                 function(){ 
                     $.each(trends, function(i, item) {
+                        //Check global filter
                         for (f in textFilter) {
                             if((item.name).toLowerCase().indexOf(textFilter[f]) != -1) return 'continue'; //Hide this trend, continue to next loop iteration
                         }
                         var t = $(trendItem),
                             tHeader = t.find('header'),
                             tFooter = t.find('footer');
+                        //Add the trend
                         tHeader.append('<a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a>');
                         var trendName = (item.name).toLowerCase(),
-                            match = false,
+                            trendStories = [],
                             i;
+                        //Check for any related news stories
                         for (i in newsStories) {
-                            if (match)
-                                continue;
-                            var newsStory    = newsStories[i].cards.summaries[0],
-                                newsStoryUrl = newsStories[i].entities.urls[0].expanded_url,
-                                newsStoryDisplayUrl = newsStories[i].entities.urls[0].display_url,
-                                tweetText    = (newsStory.title).toLowerCase();
-                            if (tweetText.indexOf(trendName) != -1) {
-                                tHeader.append('<span style="float: right">Show related news story</span>');
-                                var newsStoryHtml = 
-                                    '<div>'
-                                    +'   <img src="' +newsStory.images.web.image_url +'" width="' +newsStory.images.web.width +'" height="' +newsStory.images.web.height +'" alt="' +newsStory.title +'" style="float: right; margin: 0 0 5px 10px;" />'
-                                    +'   <h3><a href="' +newsStoryUrl +'" target="_blank">' +newsStory.title +'</a></h3>'
-                                    +'   <p>' +newsStory.description +'</p>'
-                                    +'   <p><a href="' +newsStoryUrl +'" target="_blank">' +newsStoryDisplayUrl +'</a></p>'
-                                    +'</div>';
-                                tFooter.append(newsStoryHtml);
-                                tFooter.children('div').css({'display': 'none', 'margin': '10px 0'});
-                                tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    var text = $(this).text();
-                                    if (text.indexOf('Show') !== -1) {
-                                        $(this).text('Hide related news story');
-                                        tFooter.children('div').slideDown();
-                                    } else {
-                                        $(this).text('Show related news story');
-                                        tFooter.children('div').slideUp();
+                            var newsStory    = newsStories[i].cards.summaries[0];
+                            //Make sure we havent added this story already
+                            if (trendStories.indexOf(newsStory.title) == -1) {
+                                var newsStoryUrl = newsStories[i].entities.urls[0].expanded_url,
+                                    newsStoryDisplayUrl = newsStories[i].entities.urls[0].display_url,
+                                    tweetText    = (newsStories[i].text).toLowerCase() +' ' +(newsStory.title).toLowerCase() +' ' +(newsStory.description).toLowerCase();
+                                //Match trend name, include spaces to prevent partial word matching
+                                if (tweetText.match(new RegExp('^(' +trendName +')\\s.+|.+\\s(' +trendName +')\\s.+|.+\\s(' +trendName +')$')) != null) {
+                                    //Create news story HTML
+                                    var newsStoryHtml = '<div>';
+                                    if ('images' in newsStory && 'web' in newsStory.images && 'image_url' in newsStory.images.web)
+                                        newsStoryHtml += '   <img src="' +newsStory.images.web.image_url +'" width="' +newsStory.images.web.width +'" height="' +newsStory.images.web.height +'" alt="' +newsStory.title +'" style="float: right; margin: 0 0 5px 10px;" />';
+                                    newsStoryHtml += '   <h3><a href="' +newsStoryUrl +'" target="_blank">' +newsStory.title +'</a></h3>'
+                                        +'   <p>' +newsStory.description +'</p>'
+                                        +'   <p><a href="' +newsStoryUrl +'" target="_blank">' +newsStoryDisplayUrl +'</a></p>'
+                                        +'</div>';
+                                    //Append news story container if it doesn't already exist;
+                                    if (tFooter.children('div').size() == 0)
+                                        tFooter.append('<div class="js-column-scroller scroll-v" />');
+                                    tFooter.children('div').append(newsStoryHtml);
+                                    //Add slide toggler
+                                    if (tHeader.children('span').size() == 0) {
+                                        tHeader.append('<span style="float: right">Show related news</span>');
+                                        tHeader.children('span').css({'cursor': 'pointer', 'font-size': '75%'}).on('click', function(e){
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            var text = $(this).text();
+                                            if (text.indexOf('Show') !== -1) {
+                                                $(this).text('Hide related news');
+                                                tFooter.children('div').height(function() {
+                                                    var lis = $("> div:gt(0)", this).detach(),
+                                                        ret = $(this).outerHeight(true) || 0;
+                                                    $(this).append(lis);
+                                                    return ret;
+                                                }).slideDown();
+                                            } else {
+                                                $(this).text('Show related news');
+                                                tFooter.children('div').slideUp();
+                                            }
+                                        });
                                     }
-                                });
-                                match = true;
+                                    trendStories.push(newsStory.title);
+                                }
                             }
                         }
-
+                        tFooter.children('div').css({'display': 'none', 'margin': '10px 0', 'overflow-x': 'hidden'});
+                        var storyDivs = tFooter.find('> div > div');
+                        if (storyDivs.size() > 1) {
+                            tFooter.children('div').css({'padding-right': '7px'});
+                            storyDivs.not(':last-child').css({'padding-bottom': '5px', 'margin-bottom': '5px'}).addClass('stream-item');
+                        }
                         newContent = newContent.add(t);
                     });
                     content.empty().append(newContent);
