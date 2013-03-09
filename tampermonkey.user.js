@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.0.1
+// @version      3.0.2
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -108,12 +108,15 @@
                     },
                     function(){}
                 );
-                var updaterHtml = '<div class="update-countdown" style="height: 14px; position: absolute; bottom: 0; left: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><a href="#" class="update-now" style="float: right;">Update now</a></div>';
+                var updaterHtml = '<div class="update-countdown" style="height: 14px; position: absolute; bottom: 0; right: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><a href="#" class="update-now" style="float: right;">Update now</a></div>';
                 this.$column.find('.column-scroller').css({'margin-bottom': '26px'}).after(updaterHtml);
                 this.$column.find('.update-now').on('click', function(e) {
                     e.preventDefault();
                     self.update();
                 });
+                window.setInterval(function() {
+                    self.$column.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                }, 30000);
             },
             getColumnWoeid: function() {
                 return this.columnWoeid;
@@ -199,12 +202,13 @@
                         for (j in trends) {
                             trendName = (trends[j].name).toLowerCase();
                             //Check for any related news stories
-                            var trendTweet = undefined, trendStories = [], newsStory;
+                            var trendTweet = undefined, trendStories = [], newsStory, safeNewsTitle;
                             for (k in newsStories) {
                                 tweet = newsStories[k];
                                 newsStory = newsStories[k].cards.summaries[0];
+                                safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
                                 //Make sure we havent added this story already
-                                if (trendStories.indexOf(newsStory.title) == -1) {
+                                if (trendStories.indexOf(safeNewsTitle) == -1) {
                                     var tweetText = (tweet.text).toLowerCase() +' ' +(newsStory.title).toLowerCase() +' ' +(newsStory.description).toLowerCase();
                                     //Match trend name, include spaces to prevent partial word matching
                                     if (tweetText.match(new RegExp('^(' +trendName +')\\s.+|.+\\s(' +trendName +')\\s.+|.+\\s(' +trendName +')$')) != null) {
@@ -213,7 +217,7 @@
                                         } else {
                                             trendTweet = tweet;
                                         }
-                                        trendStories.push(newsStory.title);
+                                        trendStories.push(safeNewsTitle);
                                     }
                                 }
                             }
@@ -245,7 +249,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.0.1',
+					version: '3.0.2',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key;
