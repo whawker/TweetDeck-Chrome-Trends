@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.0
+// @version      3.0.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -19,7 +19,7 @@
                 this.$node = $(TD.ui.template.render("status/tweet_detail_wrapper"))
                 this.$column.on('click', '.link-complex', {column: this.$column}, function(event) {
                     event.preventDefault();
-                    event.data.column.removeClass('is-shifted-1 js-column-state-detail-view');
+                    event.data.column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                 });
             },
             showTweetStories: function (e) {
@@ -71,11 +71,10 @@
 				return this.key;
 			},
             populate: function() {
-				this.$column.css({'border-radius': '5px'});
                 var locations = [], self = this,
                     selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>';
 
-                this.$column.find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});                
+                this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
 				this.$locationSelect = this.$column.find('.trend-location');
                 
                 this.$locationSelect.on('change', function(event) {
@@ -115,8 +114,6 @@
                     e.preventDefault();
                     self.update();
                 });
-
-                this.$column
             },
             getColumnWoeid: function() {
                 return this.columnWoeid;
@@ -163,7 +160,7 @@
 							if (!filtered)
 								trends.push(item);
                         }
-
+                        self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.scheduledUpdates.push(update);
                         self.setTrends(trends);
                     },
@@ -248,7 +245,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.0',
+					version: '3.0.1',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key;
