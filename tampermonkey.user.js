@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.0.2
+// @version      3.0.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -172,10 +172,12 @@
                 );
             },
             setTrends: function(trends) {
-                var i, item, trendItems = '';
+                var i, item, trendItems = '', promoted = '';
                 for (i in trends) {
                     item = trends[i];
-                    trendItems += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="' +item.url +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="tweet-body"><p></p><footer></footer></div><i class="sprite tweet-dogear"></i></div></div></article>';
+                    if (item.promoted_content)
+                        promoted = '<span style="padding: 1px 0 1px 20px; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAOCAMAAAAVBLyFAAAABGdBTUEAALGPC/xhBQAAAH5QTFRFAAAA+ss998EB98AD974F+96C/v7++LsI+duE+LgL8bML668K7bko/PXg+LUP+b4s/vbh/////fXi+LIT+bsw/vXh77Uw+a8W+rky/vXi/fTj8LIy964W+a0a8LE296wa9tKM+aod8K8496kd8qUc+qcg7Z4e76Af+KYg+qUid5abIAAAAAF0Uk5TAEDm2GYAAAABYktHRBHitT26AAAACXBIWXMAAABIAAAASABGyWs+AAAAeklEQVQY023PSRKCQBBEUVolUQFFHJmEVtrh/hc0s2GBEbxVxl9VBcEcs5gwviz/qK0khKfJFMl6SJpMG9nGScqkybTz9tkhB7SYjnI6I78AmkxXuhUoqxrQZmqI5d42XafNZAnl42lt32vrVOfc6/1xo+H874SZ/fkHVEAMcsTF32UAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTMtMDMtMTBUMTQ6NTU6NDQrMDE6MDBlgB4PAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDEzLTAzLTEwVDE0OjU1OjQ0KzAxOjAwFN2mswAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAASUVORK5CYII=) left top no-repeat; color: #999; display: block; font-size: 12px; line-height: 12px; margin-top: 5px;">Promoted</span>';
+                    trendItems += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="' +(item.url).replace('http://search.', 'http://www.') +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="tweet-body"><p></p><footer>' +promoted +'</footer></div><i class="sprite tweet-dogear"></i></div></div></article>';
                 }
                 this.$column.find('.column-scroller').html(trendItems);
 
@@ -249,7 +251,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.0.2',
+					version: '3.0.3',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key;
