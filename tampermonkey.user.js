@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.0.3
+// @version      3.1.0
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -10,7 +10,7 @@
 // ==/UserScript==
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 (function(window) {
-    var $ = window.$, TD, _gaq;
+    var $ = window.$, _ = window._, TD, _gaq;
     $(window.document).on('TD.ready', function() {
         TD = window.TD, _gaq = window._gaq;
 
@@ -138,16 +138,18 @@
                 this.scheduledUpdates = [];
             },
             update: function() {
+                var self = this, hashtagsDisabled = TD.extensions.Trends.isHashtagsDisabled(), options = {id: this.getColumnWoeid()};
+                if (hashtagsDisabled)
+                    options.exclude = 'hashtags';
                 this.clearSchedule();
-                var self = this;
                 this.client.makeTwitterCall(
                     'https://api.twitter.com/1.1/trends/place.json',
-                    {id: this.getColumnWoeid()},
+                    options,
                     'GET',
                     true,
                     function(response) {
                         var trendsResponse = this.processTrends(response),
-                            update = window.setTimeout(function() { self.update() }, 300000),
+                            update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency()),
 							globalFilter = TD.settings.getGlobalFilter(),
 							i, j, k, filtered, item, filters = [], trends = [];
 						for (i in globalFilter)
@@ -243,18 +245,76 @@
                 );
             }
         });
+        
+        TD.components.TrendsColSettings = TD.components.Base.extend(function() {
+            var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
+                        +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
+                        +'<div class="obj-left">'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="60000"> 1 Minute </label>'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="120000"> 2 Minutes </label>'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="300000"> 5 Minutes </label>'
+                        +'</div><div class="obj-left">'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="600000"> 10 Minutes </label>'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1200000"> 15 Minutes </label>'
+                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1800000"> 30 Minutes </label>'
+                        +'</div></div>'
+                        +'<div class="divider-bar"></div>'
+                        +'<div class="control-group"><label for="disable-hashtags" class="checkbox">Ignore trending #hashtags<input type="checkbox" name="disable-hashtags" id="disable-hashtags" /></label></div>'                        
+                        +'</fieldset>';
+            this.$fieldset = $(settingsForm);
+            $("#global-settings").append(this.$fieldset);
+
+            this.$autoUpdateFrequency = $('#auto-update-frequency [name=auto-update-frequency]');
+            this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').attr('checked', 'checked');
+            this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);   
+            this.$disableHashtags = $('#disable-hashtags');
+            this.$disableHashtags.prop('checked', TD.extensions.Trends.isHashtagsDisabled());
+            this.$disableHashtags.change(_.bind(this.toggleHashtags, this));         
+        }).methods({
+            destroy: function(a) {
+                this.$fieldset.remove()
+            },
+            updateAutoUpdateFrequency: function(e) {
+                if($(this).is(':checked')) {
+                    TD.extensions.Trends.setAutoUpdateFrequency($(this).val());
+                }
+            },
+            toggleHashtags: function(e) {
+                var isDisabled = this.$disableHashtags.is(':checked');
+                TD.extensions.Trends.setHashtagsDisabled(isDisabled);
+            }
+        });
+
+        //Override
+        var TDGlobalSettings = TD.components.GlobalSettings
+        TD.components.GlobalSettings = function() { 
+            var settings = new TDGlobalSettings,
+                menu = settings.$optionList,
+                newItem = $('<li><a href="#" class="list-link" data-action="trendscol"><strong>Trends Column</strong><i class="chev-right"></i></a></li>');
+
+            $(menu.parent()).append(newItem);
+            newItem.on('click', function(event) {
+                settings.$optionList.removeClass("selected");
+                settings.currentTab.destroy();
+                settings.currentTab = new TD.components.TrendsColSettings;
+                settings.currentTabName = "trendscol", $(this).addClass("selected");
+            });
+            settings.$optionList.push(newItem.get(0));
+
+            return settings;
+        }
 
         TD.extensions = {
             Trends: function() {
-                var trendColumns = [];
+                var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000;
                 function getAllColumns() {
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.0.3',
+					version: '3.1.0',
                     init: function() {
                         var allTdColumns = getAllColumns(),
-                            tdCol, colTitle, colKey, trendCol, key;
+                            tdCol, colTitle, colKey, trendCol, key, settings;
                         //Find out which columns are trend columns
                         for(tdCol in allTdColumns) {
                             colTitle = allTdColumns[tdCol].model.getTitle();
@@ -267,6 +327,15 @@
                         }
 						if(trendColumns.length == 0)
 							this.addColumn();
+
+                        settings = TD.storage.store.get('TDTrendsColSettings');
+                        if ($.isEmptyObject(settings))
+                            TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency});
+
+                        settings = TD.storage.store.get('TDTrendsColSettings');
+                        hashtagsDisabled = settings.hashtagsDisabled;
+                        autoUpdateFrequency = settings.autoUpdateFrequency;
+
 						this.trackGoogleAnalytics();
                     },
 					addColumn: function() {
@@ -282,6 +351,30 @@
 						}
 						return result;
 					},
+                    updateAllColumns: function() {
+                        for (var i in trendColumns)
+							trendColumns[i].update();
+                    },
+                    isHashtagsDisabled: function() {
+                        return hashtagsDisabled;
+                    },
+                    setHashtagsDisabled: function(isDisabled) {
+                        var colSettings = TD.storage.store.get('TDTrendsColSettings'),
+                            newSettings = $.extend({}, colSettings, {hashtagsDisabled: isDisabled});
+                        TD.storage.store.set('TDTrendsColSettings', newSettings);
+                        hashtagsDisabled = isDisabled;
+                        this.updateAllColumns();
+                    },
+                    getAutoUpdateFrequency: function() {
+                        return autoUpdateFrequency;
+                    },
+                    setAutoUpdateFrequency: function(freq) {
+                        var colSettings = TD.storage.store.get('TDTrendsColSettings'),
+                            newSettings = $.extend({}, colSettings, {autoUpdateFrequency: freq});
+                        TD.storage.store.set('TDTrendsColSettings', newSettings);
+                        autoUpdateFrequency = freq;
+                        this.updateAllColumns();
+                    },
 					trackGoogleAnalytics: function() {
 						//Google analytics tracking, just to see if anyone uses this
 						if(typeof(_gaq) != 'undefined' && 'push' in _gaq) {
