@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.1.2
+// @version      3.1.2.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -89,21 +89,32 @@
                     'https://api.twitter.com/1.1/trends/available.json',
                     {},
                     'GET',
-                    true,
-                    function(response) {
-                        locations = this.processTrendLocations(response);
-                    },
-                    function(){
-                        var i, indent, title = self.getTitle();
-                        for (i in locations) {
+                    this.processTrendLocations,
+                    function(rawLocations){
+                        var locations = [], i, j, indent, title = self.getTitle();
+                        locations.push(rawLocations.shift());
+                        for(i in rawLocations) {
+                            if(rawLocations[i].placeType.name == 'Town') {
+                                rawLocations[i].sortString = rawLocations[i].country + rawLocations[i].name;
+                            } else {
+                                rawLocations[i].sortString = rawLocations[i].country;
+                            }
+                        }
+                        rawLocations.sort(function(e, t) {
+                            var n = e.sortString,
+                                r = t.sortString;
+                            return n < r ? -1 : n > r ? 1 : 0
+                        });
+                        locations = locations.concat(rawLocations);
+                        for (j in locations) {
                         	indent = '', selected = '';
-                            if (locations[i].name == title) {
-                                self.setColumnWoeid(locations[i].woeid);
+                            if (locations[j].name == title) {
+                                self.setColumnWoeid(locations[j].woeid);
                                 selected = 'selected';
                             }
-                            if (locations[i].placeType.name == 'Town')
+                            if (locations[j].placeType.name == 'Town')
                                 indent = '&nbsp;&nbsp;&nbsp;&nbsp;';
-                            self.$locationSelect.append('<option ' +selected +' value="' +locations[i].woeid +'">' +indent +locations[i].name +'</option>');
+                            self.$locationSelect.append('<option ' +selected +' value="' +locations[j].woeid +'">' +indent +locations[j].name +'</option>');
                         }
                     },
                     function(){}
@@ -146,7 +157,6 @@
                     'https://api.twitter.com/1.1/trends/place.json',
                     options,
                     'GET',
-                    true,
                     function(response) {
                         var trendsResponse = this.processTrends(response),
                             update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency()),
@@ -192,7 +202,6 @@
                     'count': '200'
                     },
                     'GET',
-                    true,
                     function(response) {
                         var tweet, i, lastTweetId;
                         for(var i in response) {
@@ -212,7 +221,6 @@
                             'max_id': lastTweetId
                             },
                             'GET',
-                            true,
                             function(response) {
                                 var tweet, i, lastTweetId;
                                 for(var i in response) {
@@ -333,7 +341,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.1.2',
+					version: '3.1.2.1',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
