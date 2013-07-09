@@ -15,8 +15,10 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 
 1. Show trending topics for **any region** offered on the main Twitter site ~~and tailored trends!~~ (Currently broken).
 2. Show news relating to the trending topic
-3. Filter trending topics using the built in Global Filter
-4. Add as many Trends columns as you like! Using the already built in 'Add column' functionality
+3. Get news relating to trends in your language
+4. Ignore trending hashtags
+5. Filter trending topics using the built in Global Filter
+6. Add as many Trends columns as you like! Using the already built in 'Add column' functionality
 
 ## Installation Instructions (Tampermonkey)
 
