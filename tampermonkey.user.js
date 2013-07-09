@@ -26,8 +26,8 @@
 				var key = this.column.model.getKey(),
 				    trendCol = TD.extensions.Trends.getColumnByKey(key);
                 this.$column.find('.link-complex-target').text('Back to Trends: ' +trendCol.getTitle());
-                this.chirp = e, 
-                this.$tweetDetail = $(TD.ui.template.render("status/tweet_detail", this.chirp.getMainTweet())), 
+                this.chirp = e,
+                this.$tweetDetail = $(TD.ui.template.render("status/tweet_detail", this.chirp.getMainTweet())),
                 this.$find(".js-tweet-detail").html(this.$tweetDetail);
                 this.initialised = !0, this.$tweetDetail.trigger("uiDetailViewActive", {
                     $chirp: this.$tweetDetail,
@@ -46,7 +46,7 @@
 		}).methods({});
 
         TD.components.TrendsColumn = TD.components.Base.extend(function () {
-            this.key = undefined, this.account = undefined, this.client = undefined, this.column = undefined, this.columnWoeid = 1, this.$column = undefined, this.$locationSelect, this.$update, this.scheduledUpdates = [];
+            this.key = undefined, this.account = undefined, this.client = undefined, this.column = undefined, this.columnWoeid = 1, this.$column = undefined, this.$navLink = undefined, this.$locationSelect, this.$update, this.scheduledUpdates = [];
         }).methods({
             _init: function(key) {
                 this.account = TD.storage.accountController.getPreferredAccount('twitter');
@@ -57,7 +57,7 @@
                 if (!this.column) {
                     this.column = this._createColumn();
                 }
-                this.key = this.column.model.getKey()
+                this.key = this.column.model.getKey();
                 this.$column = $('section.column[data-column="' + this.key +'"]');
                 this.populate();
             },
@@ -76,7 +76,6 @@
 
                 this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
 				this.$locationSelect = this.$column.find('.trend-location');
-                
                 this.$locationSelect.on('change', function(event) {
                     event.preventDefault();
                     $(this).find('option:selected').each(function(){
@@ -127,6 +126,7 @@
                 });
                 window.setInterval(function() {
                     self.$column.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                    self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                 }, 30000);
             },
             getColumnWoeid: function() {
@@ -153,6 +153,7 @@
                 if (hashtagsDisabled)
                     options.exclude = 'hashtags';
                 this.clearSchedule();
+                this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
                 this.client.makeTwitterCall(
                     'https://api.twitter.com/1.1/trends/place.json',
                     options,
@@ -176,6 +177,7 @@
 								trends.push(item);
                         }
                         self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                        self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.scheduledUpdates.push(update);
                         self.setTrends(trends);
                     },
@@ -277,35 +279,33 @@
                 );
             }
         });
-        
+
         TD.components.TrendsColSettings = TD.components.Base.extend(function() {
             var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
                         +'<div class="control-group"><label for="news-sources" class="control-label" style="width:90px">News Sources</label><div class="controls" style="margin-left:100px"><select name="news-sources" id="news-sources">'
-                        +'<option value="87379397">Arabic (\u0627\u0644\u0639\u0631\u0628\u064a\u0629)</option>'
-                        +'<option value="87367302">German (Deutsch)</option>'
-                        +'<option value="el">Greek (\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac)</option>'
-                        +'<option value="86201584">English (World)</option>'
-                        +'<option value="87951253">English (UK)</option>'
-                        +'<option value="87951235">English (US)</option>'
-                        +'<option value="87951276">English (Austrailia)</option>'
-                        +'<option value="87951293">English (South Africa)</option>'
-                        +'<option value="87365182">Spanish (Espa\u00f1ol)</option>'
-                        +'<option value="87368038">French (Fran\u00e7ais)</option>'
-                        +'<option value="iw">Hebrew (\u05e2\u05d1\u05e8\u05d9\u05ea)</option>'
-                        +'<option value="87379993">Hindi (\u0939\u093f\u0902\u0926\u0940)</option>'
-                        +'<option value="87369866">Italian (Italiano)</option>'
-                        +'<option value="ja">Japanese (\u65e5\u672c\u8a9e)</option>'
-                        +'<option value="nl">Dutch (Nederlands)</option>'
-                        +'<option value="no">Norwegian (Norsk)</option>'
-                        +'<option value="pa">Panjabi (\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40)</option>'
-                        +'<option value="pl">Polish (Polski)</option>'
-                        +'<option value="87374850">Portuguese (Portugu\u00eas)</option>'
-                        +'<option value="87371608">Russian (\u0420\u0443\u0441\u0441\u043a\u0438\u0439)</option>'
-                        +'<option value="sv">Swedish (Svenska)</option>'
-                        +'<option value="th">Thai (\u0e44\u0e17\u0e22)</option>'
-                        +'<option value="tr">Turkish (T\u00fcrk\u00e7e)</option>'
-                        +'<option value="ur">Urdu (\ufe8d\ufead\ufea9\ufeed)</option>'
-                        +'<option value="vi">Vietnamese (Ti\u1ebfng Vi\u1ec7t)</option>'
+                        +'<optgroup label="English">'
+                        +'  <option value="86201584">Worldwide</option>'
+                        +'  <option value="87951253">United Kingdom</option>'
+                        +'  <option value="87951235">United States</option>'
+                        +'  <option value="87951276">Austrailia</option>'
+                        +'  <option value="88424811">Canada</option>'
+                        +'  <option value="87951293">South Africa</option>'
+                        +'</optgroup>'
+                        +'<option value="87365182">Espa\u00f1ol</option>'
+                        +'<optgroup label="Fran\u00e7ais">'
+                        +'  <option value="87368038">France</option>'
+                        +'  <option value="88424811">Canada</option>'
+                        +'</optgroup>'
+                        +'<option value="87367302">Deutsch</option>'
+                        +'<option value="87379993">\u0939\u093f\u0902\u0926\u0940</option>'
+                        +'<option value="87369866">Italiano</option>'
+                        /* +'<option value="nl">Dutch (Nederlands)</option>' */
+                        /* +'<option value="no">Norwegian (Norsk)</option>' */
+                        +'<option value="87374850">Portugu\u00eas</option>'
+                        +'<option value="87371608">\u0420\u0443\u0441\u0441\u043a\u0438\u0439</option>'
+                        /* +'<option value="tr">Turkish (T\u00fcrk\u00e7e)</option>' */
+                        /* +'<option value="ur">Urdu (\ufe8d\ufead\ufea9\ufeed)</option>' */
+                        +'<option value="87379397">\u0627\u0644\u0639\u0631\u0628\u064a\u0629</option>'
                         +'</select></div></div>'
                         +'<div class="divider-bar"></div>'
                         +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
@@ -317,14 +317,14 @@
                         +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1800000"> 30 Minutes </label>'
                         +'</div></div>'
                         +'<div class="divider-bar"></div>'
-                        +'<div class="control-group"><label for="disable-hashtags" class="checkbox">Ignore trending #hashtags<input type="checkbox" name="disable-hashtags" id="disable-hashtags" /></label></div>'                        
+                        +'<div class="control-group"><label for="disable-hashtags" class="checkbox">Ignore trending #hashtags<input type="checkbox" name="disable-hashtags" id="disable-hashtags" /></label></div>'
                         +'</fieldset>';
             this.$fieldset = $(settingsForm);
             $("#global-settings").append(this.$fieldset);
 
             this.$autoUpdateFrequency = $('#auto-update-frequency [name=auto-update-frequency]');
             this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').attr('checked', 'checked');
-            this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);   
+            this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);
             this.$disableHashtags = $('#disable-hashtags');
             this.$disableHashtags.prop('checked', TD.extensions.Trends.isHashtagsDisabled());
             this.$disableHashtags.change(_.bind(this.toggleHashtags, this));
@@ -352,7 +352,7 @@
 
         //Override
         var TDGlobalSettings = TD.components.GlobalSettings
-        TD.components.GlobalSettings = function() { 
+        TD.components.GlobalSettings = function() {
             var settings = new TDGlobalSettings,
                 menu = settings.$optionList,
                 newItem = $('<li><a href="#" class="list-link" data-action="trendscol"><strong>Trends Column</strong><i class="chev-right"></i></a></li>');
