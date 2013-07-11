@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.2
+// @version      3.2.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -376,7 +376,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.2',
+					version: '3.2.1',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
@@ -406,7 +406,7 @@
                             var newSettings = $.extend({}, settings, {newsListId: newsListId});
                             TD.storage.store.set('TDTrendsColSettings', newSettings);
                         }
-						//this.trackGoogleAnalytics();
+						this.trackGoogleAnalytics();
                     },
 					addColumn: function() {
 						trendCol = new TD.components.TrendsColumn;
