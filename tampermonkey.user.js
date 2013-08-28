@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.2.1
+// @version      3.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -13,10 +13,10 @@
     var $ = window.$, _ = window._, TD, _gaq;
     $(window.document).on('TD.ready', function() {
         TD = window.TD, _gaq = window._gaq;
-
         TD.components.TrendDetailView = TD.components.DetailView.extend(function (e, t) {}).statics({}).methods({
             _render: function () {
-                this.$node = $(TD.ui.template.render("status/tweet_detail_wrapper"))
+                this.$node = $(TD.ui.template.render("status/tweet_detail_wrapper"));
+                this.$node.find('.column-scroller').addClass('scroll-styled-v');
                 this.$column.on('click', '.link-complex', {column: this.$column}, function(event) {
                     event.preventDefault();
                     event.data.column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
@@ -39,14 +39,12 @@
                 }
             }
         });
-
 		TD.components.OpenTrends = TD.components.BaseModal.extend(function () {
 			TD.extensions.Trends.addColumn();
 			this.destroy();
 		}).methods({});
-
         TD.components.TrendsColumn = TD.components.Base.extend(function () {
-            this.key = undefined, this.account = undefined, this.client = undefined, this.column = undefined, this.columnWoeid = 1, this.$column = undefined, this.$navLink = undefined, this.$locationSelect, this.$update, this.scheduledUpdates = [];
+            this.key = undefined, this.account = undefined, this.client = undefined, this.column = undefined, this.columnWoeid = 1, this.$column = undefined, this.$navLink = undefined, this.$locationSelect, this.$update, this.scheduledUpdates = [], this.news = [];
         }).methods({
             _init: function(key) {
                 this.account = TD.storage.accountController.getPreferredAccount('twitter');
@@ -73,7 +71,6 @@
             populate: function() {
                 var locations = [], self = this,
                     selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>';
-
                 this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
 				this.$locationSelect = this.$column.find('.trend-location');
                 this.$locationSelect.on('change', function(event) {
@@ -160,12 +157,10 @@
                     'GET',
                     function(response) {
                         var trendsResponse = this.processTrends(response),
-                            update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency()),
-							globalFilter = TD.settings.getGlobalFilter(),
+                            globalFilter = TD.settings.getGlobalFilter(),
 							i, j, k, filtered, item, filters = [], trends = [];
 						for (i in globalFilter)
 							if(globalFilter[i].type == 'phrase') filters.push((globalFilter[i].value).toLowerCase());
-
 						for (j in trendsResponse.trends) {
 							filtered = false;
 							item = trendsResponse.trends[j];
@@ -178,108 +173,120 @@
                         }
                         self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
-                        self.scheduledUpdates.push(update);
                         self.setTrends(trends);
+                        self.updateNews(function() {
+                            trends.forEach(self.getNewsForTrend, self);
+                        });
+                        var update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency());
+                        self.scheduledUpdates.push(update);
                     },
                     function(){},
                     function(){}
                 );
             },
             setTrends: function(trends) {
-                var i, item, trendItems = '', promoted = '', newsListId = TD.extensions.Trends.getNewsListId();
+                var i, item, trendItems = '', promoted = '';
                 for (i in trends) {
                     item = trends[i];
                     if (item.promoted_content)
                         promoted = '<span style="padding: 1px 0 1px 20px; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAOCAMAAAAVBLyFAAAABGdBTUEAALGPC/xhBQAAAH5QTFRFAAAA+ss998EB98AD974F+96C/v7++LsI+duE+LgL8bML668K7bko/PXg+LUP+b4s/vbh/////fXi+LIT+bsw/vXh77Uw+a8W+rky/vXi/fTj8LIy964W+a0a8LE296wa9tKM+aod8K8496kd8qUc+qcg7Z4e76Af+KYg+qUid5abIAAAAAF0Uk5TAEDm2GYAAAABYktHRBHitT26AAAACXBIWXMAAABIAAAASABGyWs+AAAAeklEQVQY023PSRKCQBBEUVolUQFFHJmEVtrh/hc0s2GBEbxVxl9VBcEcs5gwviz/qK0khKfJFMl6SJpMG9nGScqkybTz9tkhB7SYjnI6I78AmkxXuhUoqxrQZmqI5d42XafNZAnl42lt32vrVOfc6/1xo+H874SZ/fkHVEAMcsTF32UAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTMtMDMtMTBUMTQ6NTU6NDQrMDE6MDBlgB4PAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDEzLTAzLTEwVDE0OjU1OjQ0KzAxOjAwFN2mswAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAASUVORK5CYII=) left top no-repeat; color: #999; display: block; font-size: 12px; line-height: 12px; margin-top: 5px;">Promoted</span>';
-                    trendItems += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="' +(item.url).replace('http://search.', 'http://www.') +'" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="tweet-body"><p></p><footer>' +promoted +'</footer></div><i class="sprite tweet-dogear"></i></div></div></article>';
+                    trendItems += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="http://www.twitter.com?q=&quot;' +item.query +'&quot;" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="tweet-body"><p></p><footer>' +promoted +'</footer></div><i class="sprite tweet-dogear"></i></div></div></article>';
                 }
                 this.$column.find('.column-scroller').html(trendItems);
+            },
+            updateNews: function(callback) {
+                var self = this, newsListId = TD.extensions.Trends.getNewsListId();
+                this.news = [];
+                fetchNews(this.news, newsListId, 400, callback);
 
-                var self = this, newsStories = [];
-                this.client.makeTwitterCall(
-                    'https://api.twitter.com/1.1/lists/statuses.json',
-                    {
-                    'list_id': newsListId,
-                    'since_id': '1',
-                    'count': '200'
-                    },
-                    'GET',
-                    function(response) {
-                        var tweet, i, lastTweetId;
-                        for(var i in response) {
-                            tweet = response[i];
-                            //Find only those tweets that include media
-                            if('cards' in tweet && 'summaries' in tweet.cards && tweet.cards.summaries.length > 0) {
-                                newsStories.push(this.processTweet(tweet));
+                //Can only fetch 200 at a time, any additional performed as recursive callback. Then calls cb function
+                function fetchNews(newsArr, newsListId, count, cb) {
+                    var nextCount = count - 200;
+                    if (count > 200)
+                        count = 200;
+                    var request = {
+                        'since_id': '1',
+                        'list_id': newsListId,
+                        'count': count
+                    };
+                    if (newsArr.length)
+                        request.max_id = (newsArr[newsArr.length - 1]).id;
+                    self.client.makeTwitterCall(
+                        'https://api.twitter.com/1.1/lists/statuses.json',
+                        request,
+                        'GET',
+                        function(response) {
+                            var tweet, i;
+                            for(var i in response) {
+                                tweet = response[i];
+                                //Find only those tweets that include media
+                                if('cards' in tweet && 'summaries' in tweet.cards && tweet.cards.summaries.length > 0) {
+                                    newsArr.push(this.processTweet(tweet));
+                                }
                             }
-                            lastTweetId = tweet.id_str;
+                            if (nextCount > 0) {
+                                return fetchNews(newsArr, newsListId, nextCount, cb);
+                            } else {
+                                if (typeof(cb) == 'function')
+                                    cb();
+                            }
+                        },
+                        function(){},
+                        function(){}
+                    );
+                }
+            },
+            getNewsForTrend: function(trend, index, array) {
+                try {
+                    var trendName = trend.name, self = this, i, j;
+                    //Check for any related news stories
+                    var trendTweet = $.extend(true, {}, self.news[0]), trendStories = [], newsStory, safeNewsTitle, seenStories = [];
+                    for (i in self.news) {
+                        tweet = self.news[i];
+                        newsStory = self.news[i].cards.summaries[0];
+                        safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
+                        //Make sure we havent added this story already
+                        if (seenStories.indexOf(safeNewsTitle) == -1) {
+                            var tweetText = tweet.text +' ' +newsStory.title +' ' +newsStory.description,
+                                trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
+                                matchCount = 0;
+                            //Match trend name, include word boundaries to prevent partial word matching
+                            tweetText.replace(trendNameMatch, function(all, match){
+                                matchCount++;
+                            });
+                            if (matchCount) {
+                                trendStories.push({
+                                    story: newsStory,
+                                    count: matchCount
+                                });
+                                seenStories.push(safeNewsTitle);
+                            }
                         }
-                        self.client.makeTwitterCall(
-                            'https://api.twitter.com/1.1/lists/statuses.json',
-                            {
-                            'list_id': newsListId,
-                            'since_id': '1',
-                            'count': '200',
-                            'max_id': lastTweetId
-                            },
-                            'GET',
-                            function(response) {
-                                var tweet, i, lastTweetId;
-                                for(var i in response) {
-                                    tweet = response[i];
-                                    //Find only those tweets that include media
-                                    if('cards' in tweet && 'summaries' in tweet.cards && tweet.cards.summaries.length > 0) {
-                                        newsStories.push(this.processTweet(tweet));
-                                    }
-                                }
-                                var j, k, trendName;
-                                for (j in trends) {
-                                    trendName = trends[j].name;
-                                    //Check for any related news stories
-                                    var trendTweet = undefined, trendStories = [], newsStory, safeNewsTitle;
-                                    for (k in newsStories) {
-                                        tweet = newsStories[k];
-                                        newsStory = newsStories[k].cards.summaries[0];
-                                        safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
-                                        //Make sure we havent added this story already
-                                        if (trendStories.indexOf(safeNewsTitle) == -1) {
-                                            var tweetText = tweet.text +' ' +newsStory.title +' ' +newsStory.description;
-                                            //Match trend name, include word boundaries to prevent partial word matching
-                                            if (!!(tweetText.match(new RegExp('\\b' +trendName +'\\b', 'mi')))) {
-                                                if (typeof(trendTweet) != 'undefined') {
-                                                    trendTweet.cards.summaries.push(newsStory);
-                                                } else {
-                                                    trendTweet = tweet;
-                                                }
-                                                trendStories.push(safeNewsTitle);
-                                            }
-                                        }
-                                    }
-                                    if (typeof(trendTweet) != 'undefined') {
-                                        var article = self.$column.find('article:nth-of-type(' +(j/1+1) +')');
-                                        article.find('header')
-                                            .append('<span style="float: right" class="js-show-news">Show related news</span>');
-                                        article.find('.js-show-news')
-                                            .css({cursor: 'pointer', 'font-size': '75%'})
-                                            .data('trendTweet', trendTweet)
-                                            .on('click', function(event) {
-                                                event.preventDefault();
-                                                var tdv = new TD.components.TrendDetailView(self.column, self.$column);
-                                                tdv.showTweetStories($(this).data('trendTweet'));
-                                            });
-                                    }
-                                }
-                            },
-                            function(){},
-                            function(){}
-                        );
-                    },
-                    function(){},
-                    function(){}
-                );
+                    }
+                    //Sort by highest num of references to trend
+                    trendStories.sort(function(value1,value2){ return value2.count - value1.count; });
+                    if (trendStories.length) {
+                        trendTweet.cards.summaries = [];
+                        for (j in trendStories) {
+                            trendTweet.cards.summaries.push(trendStories[j].story);
+                        }
+                        var article = self.$column.find('article:nth-of-type(' +(index+1) +')');
+                        article.find('header')
+                            .append('<span style="float: right" class="js-show-news">Show related news</span>');
+                        article.find('.js-show-news')
+                            .css({cursor: 'pointer', 'font-size': '75%'})
+                            .data('trendTweet', trendTweet)
+                            .on('click', function(event) {
+                                event.preventDefault();
+                                var tdv = new TD.components.TrendDetailView(self.column, self.$column);
+                                tdv.showTweetStories($(this).data('trendTweet'));
+                            });
+                    }
+                } catch (err) {
+                    console.log(err);
+                }
             }
         });
-
         TD.components.TrendsColSettings = TD.components.Base.extend(function() {
             var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
                         +'<div class="control-group"><label for="news-sources" class="control-label" style="width:90px">News Sources</label><div class="controls" style="margin-left:100px"><select name="news-sources" id="news-sources">'
@@ -321,7 +328,6 @@
                         +'</fieldset>';
             this.$fieldset = $(settingsForm);
             $("#global-settings").append(this.$fieldset);
-
             this.$autoUpdateFrequency = $('#auto-update-frequency [name=auto-update-frequency]');
             this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').attr('checked', 'checked');
             this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);
@@ -349,14 +355,12 @@
                 TD.extensions.Trends.setNewsListId(source);
             }
         });
-
         //Override
         var TDGlobalSettings = TD.components.GlobalSettings
         TD.components.GlobalSettings = function() {
             var settings = new TDGlobalSettings,
                 menu = settings.$optionList,
                 newItem = $('<li><a href="#" class="list-link" data-action="trendscol"><strong>Trends Column</strong><i class="chev-right"></i></a></li>');
-
             $(menu.parent()).append(newItem);
             newItem.on('click', function(event) {
                 settings.$optionList.removeClass("selected");
@@ -365,10 +369,8 @@
                 settings.currentTabName = "trendscol", $(this).addClass("selected");
             });
             settings.$optionList.push(newItem.get(0));
-
             return settings;
         }
-
         TD.extensions = {
             Trends: function() {
                 var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000, newsListId = '86201584';
@@ -376,7 +378,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.2.1',
+					version: '3.3',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
@@ -392,11 +394,9 @@
                         }
 						if(trendColumns.length == 0)
 							this.addColumn();
-
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         if ($.isEmptyObject(settings))
                             TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsListId': newsListId});
-
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         hashtagsDisabled = settings.hashtagsDisabled;
                         autoUpdateFrequency = settings.autoUpdateFrequency;
