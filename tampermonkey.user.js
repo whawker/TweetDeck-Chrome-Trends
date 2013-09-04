@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.3
+// @version      3.3.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -13,6 +13,7 @@
     var $ = window.$, _ = window._, TD, _gaq;
     $(window.document).on('TD.ready', function() {
         TD = window.TD, _gaq = window._gaq;
+
         TD.components.TrendDetailView = TD.components.DetailView.extend(function (e, t) {}).statics({}).methods({
             _render: function () {
                 this.$node = $(TD.ui.template.render("status/tweet_detail_wrapper"));
@@ -23,8 +24,8 @@
                 });
             },
             showTweetStories: function (e) {
-				var key = this.column.model.getKey(),
-				    trendCol = TD.extensions.Trends.getColumnByKey(key);
+                var key = this.column.model.getKey(),
+                    trendCol = TD.extensions.Trends.getColumnByKey(key);
                 this.$column.find('.link-complex-target').text('Back to Trends: ' +trendCol.getTitle());
                 this.chirp = e,
                 this.$tweetDetail = $(TD.ui.template.render("status/tweet_detail", this.chirp.getMainTweet())),
@@ -39,10 +40,12 @@
                 }
             }
         });
-		TD.components.OpenTrends = TD.components.BaseModal.extend(function () {
-			TD.extensions.Trends.addColumn();
-			this.destroy();
-		}).methods({});
+
+        TD.components.OpenTrends = TD.components.BaseModal.extend(function () {
+            TD.extensions.Trends.addColumn();
+            this.destroy();
+        }).methods({});
+
         TD.components.TrendsColumn = TD.components.Base.extend(function () {
             this.key = undefined, this.account = undefined, this.client = undefined, this.column = undefined, this.columnWoeid = 1, this.$column = undefined, this.$navLink = undefined, this.$locationSelect, this.$update, this.scheduledUpdates = [], this.news = [];
         }).methods({
@@ -65,14 +68,15 @@
                 TD.controller.columnManager.addColumnToUI(col);
                 return col;
             },
-			getKey: function() {
-				return this.key;
-			},
+            getKey: function() {
+                return this.key;
+            },
             populate: function() {
                 var locations = [], self = this,
                     selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>';
+
                 this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
-				this.$locationSelect = this.$column.find('.trend-location');
+                this.$locationSelect = this.$column.find('.trend-location');
                 this.$locationSelect.on('change', function(event) {
                     event.preventDefault();
                     $(this).find('option:selected').each(function(){
@@ -103,7 +107,7 @@
                         });
                         locations = locations.concat(rawLocations);
                         for (j in locations) {
-                        	indent = '', selected = '';
+                            indent = '', selected = '';
                             if (locations[j].name == title) {
                                 self.setColumnWoeid(locations[j].woeid);
                                 selected = 'selected';
@@ -158,18 +162,19 @@
                     function(response) {
                         var trendsResponse = this.processTrends(response),
                             globalFilter = TD.settings.getGlobalFilter(),
-							i, j, k, filtered, item, filters = [], trends = [];
-						for (i in globalFilter)
-							if(globalFilter[i].type == 'phrase') filters.push((globalFilter[i].value).toLowerCase());
-						for (j in trendsResponse.trends) {
-							filtered = false;
-							item = trendsResponse.trends[j];
-							for (k in filters) {
-								if (!filtered && (item.name).toLowerCase().indexOf(filters[k]) != -1)
-									filtered = true;
-							}
-							if (!filtered)
-								trends.push(item);
+                            i, j, k, filtered, item, filters = [], trends = [];
+                        for (i in globalFilter)
+                            if(globalFilter[i].type == 'phrase') filters.push((globalFilter[i].value).toLowerCase());
+
+                        for (j in trendsResponse.trends) {
+                            filtered = false;
+                            item = trendsResponse.trends[j];
+                            for (k in filters) {
+                                if (!filtered && (item.name).toLowerCase().indexOf(filters[k]) != -1)
+                                    filtered = true;
+                            }
+                            if (!filtered)
+                                trends.push(item);
                         }
                         self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
@@ -177,6 +182,7 @@
                         self.updateNews(function() {
                             trends.forEach(self.getNewsForTrend, self);
                         });
+
                         var update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency());
                         self.scheduledUpdates.push(update);
                     },
@@ -239,6 +245,12 @@
             getNewsForTrend: function(trend, index, array) {
                 try {
                     var trendName = trend.name, self = this, i, j;
+                    if (trendName.charAt(0) == '#') { //If is hashtag
+                        trendName = trendName.substring(1); //Remove hashtag
+                        if (!trendName.match(/^[A-Z]*$/)) //If not all uppercase
+                            trendName = $.trim(trendName.replace(/([A-Z]|[0-9]+)/g, ' $1')); //replace camelCase strings to camel Case
+                    }
+
                     //Check for any related news stories
                     var trendTweet = $.extend(true, {}, self.news[0]), trendStories = [], newsStory, safeNewsTitle, seenStories = [];
                     for (i in self.news) {
@@ -265,11 +277,13 @@
                     }
                     //Sort by highest num of references to trend
                     trendStories.sort(function(value1,value2){ return value2.count - value1.count; });
+
                     if (trendStories.length) {
                         trendTweet.cards.summaries = [];
                         for (j in trendStories) {
                             trendTweet.cards.summaries.push(trendStories[j].story);
                         }
+
                         var article = self.$column.find('article:nth-of-type(' +(index+1) +')');
                         article.find('header')
                             .append('<span style="float: right" class="js-show-news">Show related news</span>');
@@ -287,47 +301,49 @@
                 }
             }
         });
+
         TD.components.TrendsColSettings = TD.components.Base.extend(function() {
             var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
-                        +'<div class="control-group"><label for="news-sources" class="control-label" style="width:90px">News Sources</label><div class="controls" style="margin-left:100px"><select name="news-sources" id="news-sources">'
-                        +'<optgroup label="English">'
-                        +'  <option value="86201584">Worldwide</option>'
-                        +'  <option value="87951253">United Kingdom</option>'
-                        +'  <option value="87951235">United States</option>'
-                        +'  <option value="87951276">Austrailia</option>'
-                        +'  <option value="88424811">Canada</option>'
-                        +'  <option value="87951293">South Africa</option>'
-                        +'</optgroup>'
-                        +'<option value="87365182">Espa\u00f1ol</option>'
-                        +'<optgroup label="Fran\u00e7ais">'
-                        +'  <option value="87368038">France</option>'
-                        +'  <option value="88424811">Canada</option>'
-                        +'</optgroup>'
-                        +'<option value="87367302">Deutsch</option>'
-                        +'<option value="87379993">\u0939\u093f\u0902\u0926\u0940</option>'
-                        +'<option value="87369866">Italiano</option>'
-                        /* +'<option value="nl">Dutch (Nederlands)</option>' */
-                        /* +'<option value="no">Norwegian (Norsk)</option>' */
-                        +'<option value="87374850">Portugu\u00eas</option>'
-                        +'<option value="87371608">\u0420\u0443\u0441\u0441\u043a\u0438\u0439</option>'
-                        /* +'<option value="tr">Turkish (T\u00fcrk\u00e7e)</option>' */
-                        /* +'<option value="ur">Urdu (\ufe8d\ufead\ufea9\ufeed)</option>' */
-                        +'<option value="87379397">\u0627\u0644\u0639\u0631\u0628\u064a\u0629</option>'
-                        +'</select></div></div>'
-                        +'<div class="divider-bar"></div>'
-                        +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
-                        +'<div class="obj-left">'
-                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="300000"> 5 Minutes </label>'
-                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="600000"> 10 Minutes </label>'
-                        +'</div><div class="obj-left">'
-                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1200000"> 15 Minutes </label>'
-                        +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1800000"> 30 Minutes </label>'
-                        +'</div></div>'
-                        +'<div class="divider-bar"></div>'
-                        +'<div class="control-group"><label for="disable-hashtags" class="checkbox">Ignore trending #hashtags<input type="checkbox" name="disable-hashtags" id="disable-hashtags" /></label></div>'
-                        +'</fieldset>';
+                +'<div class="control-group"><label for="news-sources" class="control-label" style="width:90px">News Sources</label><div class="controls" style="margin-left:100px"><select name="news-sources" id="news-sources">'
+                +'<optgroup label="English">'
+                +'  <option value="86201584">Worldwide</option>'
+                +'  <option value="87951253">United Kingdom</option>'
+                +'  <option value="87951235">United States</option>'
+                +'  <option value="87951276">Austrailia</option>'
+                +'  <option value="88424811">Canada</option>'
+                +'  <option value="87951293">South Africa</option>'
+                +'</optgroup>'
+                +'<option value="87365182">Espa\u00f1ol</option>'
+                +'<optgroup label="Fran\u00e7ais">'
+                +'  <option value="87368038">France</option>'
+                +'  <option value="88424811">Canada</option>'
+                +'</optgroup>'
+                +'<option value="87367302">Deutsch</option>'
+                +'<option value="87379993">\u0939\u093f\u0902\u0926\u0940</option>'
+                +'<option value="87369866">Italiano</option>'
+                /* +'<option value="nl">Dutch (Nederlands)</option>' */
+                /* +'<option value="no">Norwegian (Norsk)</option>' */
+                +'<option value="87374850">Portugu\u00eas</option>'
+                +'<option value="87371608">\u0420\u0443\u0441\u0441\u043a\u0438\u0439</option>'
+                /* +'<option value="tr">Turkish (T\u00fcrk\u00e7e)</option>' */
+                /* +'<option value="ur">Urdu (\ufe8d\ufead\ufea9\ufeed)</option>' */
+                +'<option value="87379397">\u0627\u0644\u0639\u0631\u0628\u064a\u0629</option>'
+                +'</select></div></div>'
+                +'<div class="divider-bar"></div>'
+                +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
+                +'<div class="obj-left">'
+                +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="300000"> 5 Minutes </label>'
+                +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="600000"> 10 Minutes </label>'
+                +'</div><div class="obj-left">'
+                +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1200000"> 15 Minutes </label>'
+                +'<label class="fixed-width-label"><input type="radio" class="js-theme-radio inline-radio" name="auto-update-frequency" value="1800000"> 30 Minutes </label>'
+                +'</div></div>'
+                +'<div class="divider-bar"></div>'
+                +'<div class="control-group"><label for="disable-hashtags" class="checkbox">Ignore trending #hashtags<input type="checkbox" name="disable-hashtags" id="disable-hashtags" /></label></div>'
+                +'</fieldset>';
             this.$fieldset = $(settingsForm);
             $("#global-settings").append(this.$fieldset);
+
             this.$autoUpdateFrequency = $('#auto-update-frequency [name=auto-update-frequency]');
             this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').attr('checked', 'checked');
             this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);
@@ -355,12 +371,14 @@
                 TD.extensions.Trends.setNewsListId(source);
             }
         });
+
         //Override
         var TDGlobalSettings = TD.components.GlobalSettings
         TD.components.GlobalSettings = function() {
             var settings = new TDGlobalSettings,
                 menu = settings.$optionList,
                 newItem = $('<li><a href="#" class="list-link" data-action="trendscol"><strong>Trends Column</strong><i class="chev-right"></i></a></li>');
+
             $(menu.parent()).append(newItem);
             newItem.on('click', function(event) {
                 settings.$optionList.removeClass("selected");
@@ -369,8 +387,10 @@
                 settings.currentTabName = "trendscol", $(this).addClass("selected");
             });
             settings.$optionList.push(newItem.get(0));
+
             return settings;
         }
+
         TD.extensions = {
             Trends: function() {
                 var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000, newsListId = '86201584';
@@ -378,7 +398,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-					version: '3.3',
+                    version: '3.3.1',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
@@ -392,11 +412,13 @@
                                 trendColumns.push(trendCol);
                             }
                         }
-						if(trendColumns.length == 0)
-							this.addColumn();
+                        if(trendColumns.length == 0)
+                            this.addColumn();
+
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         if ($.isEmptyObject(settings))
                             TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsListId': newsListId});
+
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         hashtagsDisabled = settings.hashtagsDisabled;
                         autoUpdateFrequency = settings.autoUpdateFrequency;
@@ -406,24 +428,24 @@
                             var newSettings = $.extend({}, settings, {newsListId: newsListId});
                             TD.storage.store.set('TDTrendsColSettings', newSettings);
                         }
-						this.trackGoogleAnalytics();
+                        this.trackGoogleAnalytics();
                     },
-					addColumn: function() {
-						trendCol = new TD.components.TrendsColumn;
-						trendCol._init();
-						trendColumns.push(trendCol);
-					},
-					getColumnByKey: function(key) {
-						var i, result = false;
-						for (i in trendColumns) {
-							if (trendColumns[i].getKey() == key)
-								result = trendColumns[i];
-						}
-						return result;
-					},
+                    addColumn: function() {
+                        trendCol = new TD.components.TrendsColumn;
+                        trendCol._init();
+                        trendColumns.push(trendCol);
+                    },
+                    getColumnByKey: function(key) {
+                        var i, result = false;
+                        for (i in trendColumns) {
+                            if (trendColumns[i].getKey() == key)
+                                result = trendColumns[i];
+                        }
+                        return result;
+                    },
                     updateAllColumns: function() {
                         for (var i in trendColumns)
-							trendColumns[i].update();
+                            trendColumns[i].update();
                     },
                     isHashtagsDisabled: function() {
                         return hashtagsDisabled;
@@ -455,25 +477,25 @@
                         newsListId = source;
                         this.updateAllColumns();
                     },
-					trackGoogleAnalytics: function() {
-						//Google analytics tracking, just to see if anyone uses this
-						if(typeof(_gaq) != 'undefined' && 'push' in _gaq) {
-							var handle = TD.storage.accountController.getPreferredAccount().getUsername();
-							_gaq.push(['b._setAccount', 'UA-33365040-1']);
-							_gaq.push(
-								['b._setCustomVar', 1, 'handle', handle, 2],
-								['b._setCustomVar', 2, 'version', TD.version, 2],
-								['b._setCustomVar', 3, 'script', TD.extensions.Trends.version, 2],
-								['b._trackEvent', 'Open', 'handle', handle],
-								['b._trackEvent', 'Version', 'version', TD.version],
-								['b._trackEvent', 'Version', 'version', TD.extensions.Trends.version],
-								['b._trackPageview']
-							);
-						} else {
-							setTimeout(this.trackGoogleAnalytics, 500);
-							return;
-						}
-					}
+                    trackGoogleAnalytics: function() {
+                        //Google analytics tracking, just to see if anyone uses this
+                        if(typeof(_gaq) != 'undefined' && 'push' in _gaq) {
+                            var handle = TD.storage.accountController.getPreferredAccount().getUsername();
+                            _gaq.push(['b._setAccount', 'UA-33365040-1']);
+                            _gaq.push(
+                                ['b._setCustomVar', 1, 'handle', handle, 2],
+                                ['b._setCustomVar', 2, 'version', TD.version, 2],
+                                ['b._setCustomVar', 3, 'script', TD.extensions.Trends.version, 2],
+                                ['b._trackEvent', 'Open', 'handle', handle],
+                                ['b._trackEvent', 'Version', 'version', TD.version],
+                                ['b._trackEvent', 'Version', 'version', TD.extensions.Trends.version],
+                                ['b._trackPageview']
+                            );
+                        } else {
+                            setTimeout(this.trackGoogleAnalytics, 500);
+                            return;
+                        }
+                    }
                 }
             }()
         };
