@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.3.1
+// @version      3.3.2
 // @description  Add a trending topics column to tweetdeck
 // @include      https://web.tweetdeck.com/*
 // @run-at       document-end
@@ -345,13 +345,13 @@
             $("#global-settings").append(this.$fieldset);
 
             this.$autoUpdateFrequency = $('#auto-update-frequency [name=auto-update-frequency]');
-            this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').attr('checked', 'checked');
+            this.$autoUpdateFrequency.filter('[value="' + TD.extensions.Trends.getAutoUpdateFrequency() + '"]').prop('checked', true);
             this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);
             this.$disableHashtags = $('#disable-hashtags');
             this.$disableHashtags.prop('checked', TD.extensions.Trends.isHashtagsDisabled());
             this.$disableHashtags.change(_.bind(this.toggleHashtags, this));
             this.$newsListId = $('#news-sources');
-            this.$newsListId.children().filter('[value="' + TD.extensions.Trends.getNewsListId() + '"]').attr('selected', 'selected');
+            this.$newsListId.val(TD.extensions.Trends.getNewsListId());
             this.$newsListId.change(_.bind(this.toggleNewsListId, this));
         }).methods({
             destroy: function(a) {
@@ -398,7 +398,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '3.3.1',
+                    version: '3.3.2',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
