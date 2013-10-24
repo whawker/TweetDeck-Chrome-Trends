@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.3.2
+// @version      3.3.3
 // @description  Add a trending topics column to tweetdeck
-// @include      https://web.tweetdeck.com/*
+// @include      /^https:\/\/(web\.)?tweetdeck\.(twitter\.)?com(\/)?.*$/
 // @run-at       document-end
 // @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.user.js
 // @copyright    2013+, William Hawker (willhawker.com)
@@ -398,7 +398,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '3.3.2',
+                    version: '3.3.3',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
