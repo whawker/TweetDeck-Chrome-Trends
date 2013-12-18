@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      3.3.4
+// @version      4.0
 // @description  Add a trending topics column to tweetdeck
-// @include      /^https:\/\/(web\.)?tweetdeck\.(twitter\.)?com(\/)?.*$/
+// @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
 // @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.user.js
 // @copyright    2013+, William Hawker (willhawker.com)
@@ -179,9 +179,7 @@
                         self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
                         self.setTrends(trends);
-                        self.updateNews(function() {
-                            trends.forEach(self.getNewsForTrend, self);
-                        });
+                        trends.forEach(self.getNewsForTrend, self);
 
                         var update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency());
                         self.scheduledUpdates.push(update);
@@ -198,134 +196,144 @@
                 }
                 this.$column.find('.column-scroller').html(trendItems);
             },
-            updateNews: function(callback) {
-                var self = this, newsListId = TD.extensions.Trends.getNewsListId();
-                this.news = [];
-                fetchNews(this.news, newsListId, 400, callback);
+            getNewsForTrend: function(trend, index, array) {
+                var self = this, trendName = trend.name, lang = TD.extensions.Trends.getNewsLanguage();
+                var request = {
+                    'q': '"' +trendName +'" filter:news',
+                    'count': 100,
+                    'result_type': 'recent',
+                    'lang': lang,
+                    'include_entities': 1,
+                    'include_user_entities': 1,
+                    'include_cards': 1
+                };
 
-                //Can only fetch 200 at a time, any additional performed as recursive callback. Then calls cb function
-                function fetchNews(newsArr, newsListId, count, cb) {
-                    var nextCount = count - 200;
-                    if (count > 200)
-                        count = 200;
-                    var request = {
-                        'since_id': '1',
-                        'list_id': newsListId,
-                        'count': count
-                    };
-                    if (newsArr.length)
-                        request.max_id = (newsArr[newsArr.length - 1]).id;
-                    self.client.makeTwitterCall(
-                        'https://api.twitter.com/1.1/lists/statuses.json',
-                        request,
-                        'GET',
-                        function(response) {
-                            var tweet, i;
-                            for(var i in response) {
-                                tweet = response[i];
-                                //Find only those tweets that include media
-                                if('cards' in tweet && 'summaries' in tweet.cards && tweet.cards.summaries.length > 0) {
-                                    newsArr.push(this.processTweet(tweet));
+                self.client.makeTwitterCall(
+                    'https://api.twitter.com/1.1/search/tweets.json',
+                    request,
+                    'GET',
+                    function(response) {
+                        var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
+
+                        for(var i in statuses) {
+                            tweet = this.processTweet(statuses[i]);
+                            if(tweet.cards)
+
+                            //Find only those tweets that include media
+                            if(tweet.cards && (tweet.cards.summaries || tweet.cards.players)) {                   
+                                if (trendTweet === null)
+                                    trendTweet = tweet;
+                                
+                                if (tweet.cards.summaries) {
+                                    newsStory = tweet.cards.summaries[0];
+                                } else {
+                                    newsStory = tweet.cards.players[0];
+                                }
+                                safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
+                                
+                                //Make sure we haven't added this story already
+                                if (seenStories.indexOf(safeNewsTitle) == -1) {
+                                    var tweetText = newsStory.title +' ' +newsStory.description,
+                                        trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
+                                        matchCount = 0;
+                                    //Match trend name, include word boundaries to prevent partial word matching
+                                    tweetText.replace(trendNameMatch, function(all, match){
+                                        matchCount++;
+                                    });
+                                    if (matchCount) {
+                                        newsArr.push({
+                                            story: newsStory,
+                                            count: matchCount
+                                        });
+                                        seenStories.push(safeNewsTitle);
+                                    }
                                 }
                             }
-                            if (nextCount > 0) {
-                                return fetchNews(newsArr, newsListId, nextCount, cb);
-                            } else {
-                                if (typeof(cb) == 'function')
-                                    cb();
+                        }
+                        
+                        if (newsArr.length) {
+                             //Sort by highest num of references to trend
+                            newsArr.sort(function(value1,value2){ return value2.count - value1.count; });
+                        
+                            trendTweet.cards.summaries = [];
+                            for (j in newsArr) {
+                                trendTweet.cards.summaries.push(newsArr[j].story);
                             }
-                        },
-                        function(){},
-                        function(){}
-                    );
-                }
-            },
-            getNewsForTrend: function(trend, index, array) {
-                try {
-                    var trendName = trend.name, self = this, i, j;
-                    if (trendName.charAt(0) == '#') { //If is hashtag
-                        trendName = trendName.substring(1); //Remove hashtag
-                        if (!trendName.match(/^[A-Z]*$/)) //If not all uppercase
-                            trendName = $.trim(trendName.replace(/([A-Z]|[0-9]+)/g, ' $1')); //replace camelCase strings to camel Case
-                    }
 
-                    //Check for any related news stories
-                    var trendTweet = $.extend(true, {}, self.news[0]), trendStories = [], newsStory, safeNewsTitle, seenStories = [];
-                    for (i in self.news) {
-                        tweet = self.news[i];
-                        newsStory = self.news[i].cards.summaries[0];
-                        safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
-                        //Make sure we havent added this story already
-                        if (seenStories.indexOf(safeNewsTitle) == -1) {
-                            var tweetText = tweet.text +' ' +newsStory.title +' ' +newsStory.description,
-                                trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
-                                matchCount = 0;
-                            //Match trend name, include word boundaries to prevent partial word matching
-                            tweetText.replace(trendNameMatch, function(all, match){
-                                matchCount++;
-                            });
-                            if (matchCount) {
-                                trendStories.push({
-                                    story: newsStory,
-                                    count: matchCount
+                            var article = self.$column.find('article:nth-of-type(' +(index+1) +')');
+                            article.find('.tweet-body')
+                                .after('<div class="conversation-indicator l-cell js-show-news"><i class="icon icon-arrow-r"></i></div>');
+                            article.find('.js-show-news')
+                                .css({cursor: 'pointer', 'padding-top': 0})
+                                .data('trendTweet', trendTweet)
+                                .on('click', function(event) {
+                                    event.preventDefault();
+                                    var tdv = new TD.components.TrendDetailView(self.column, self.$column);
+                                    tdv.showTweetStories($(this).data('trendTweet'));
                                 });
-                                seenStories.push(safeNewsTitle);
-                            }
                         }
-                    }
-                    //Sort by highest num of references to trend
-                    trendStories.sort(function(value1,value2){ return value2.count - value1.count; });
-
-                    if (trendStories.length) {
-                        trendTweet.cards.summaries = [];
-                        for (j in trendStories) {
-                            trendTweet.cards.summaries.push(trendStories[j].story);
-                        }
-
-                        var article = self.$column.find('article:nth-of-type(' +(index+1) +')');
-                        article.find('.tweet-body')
-                            .after('<div class="conversation-indicator l-cell js-show-news"><i class="icon icon-arrow-r"></i></div>');
-                        article.find('.js-show-news')
-                            .css({cursor: 'pointer', 'padding-top': 0})
-                            .data('trendTweet', trendTweet)
-                            .on('click', function(event) {
-                                event.preventDefault();
-                                var tdv = new TD.components.TrendDetailView(self.column, self.$column);
-                                tdv.showTweetStories($(this).data('trendTweet'));
-                            });
-                    }
-                } catch (err) {
-                    console.log(err);
-                }
+                    },
+                    function(){},
+                    function(){}
+                );
             }
         });
 
         TD.components.TrendsColSettings = TD.components.Base.extend(function() {
             var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
-                +'<div class="control-group"><label for="news-sources" class="control-label" style="width:90px">News Sources</label><div class="controls" style="margin-left:100px"><select name="news-sources" id="news-sources">'
-                +'<optgroup label="English">'
-                +'  <option value="86201584">Worldwide</option>'
-                +'  <option value="87951253">United Kingdom</option>'
-                +'  <option value="87951235">United States</option>'
-                +'  <option value="87951276">Austrailia</option>'
-                +'  <option value="88424811">Canada</option>'
-                +'  <option value="87951293">South Africa</option>'
-                +'</optgroup>'
-                +'<option value="87365182">Espa\u00f1ol</option>'
-                +'<optgroup label="Fran\u00e7ais">'
-                +'  <option value="87368038">France</option>'
-                +'  <option value="88424811">Canada</option>'
-                +'</optgroup>'
-                +'<option value="87367302">Deutsch</option>'
-                +'<option value="87379993">\u0939\u093f\u0902\u0926\u0940</option>'
-                +'<option value="87369866">Italiano</option>'
-                /* +'<option value="nl">Dutch (Nederlands)</option>' */
-                /* +'<option value="no">Norwegian (Norsk)</option>' */
-                +'<option value="87374850">Portugu\u00eas</option>'
-                +'<option value="87371608">\u0420\u0443\u0441\u0441\u043a\u0438\u0439</option>'
-                /* +'<option value="tr">Turkish (T\u00fcrk\u00e7e)</option>' */
-                /* +'<option value="ur">Urdu (\ufe8d\ufead\ufea9\ufeed)</option>' */
-                +'<option value="87379397">\u0627\u0644\u0639\u0631\u0628\u064a\u0629</option>'
+                +'<div class="control-group"><label for="lang" class="control-label" style="width:100px; text-align: left;">News Language</label><div class="controls" style="margin-left:100px"><select id="news-language" name="news-language">'
+                +'  <option value="all" selected="selected">Any Language</option>'
+                +'  <option value="am">Amharic (\u12A0\u121B\u122D\u129B)</option>'
+                +'  <option value="ar">Arabic (\u0627\u0644\u0639\u0631\u0628\u064A\u0629)</option>'
+                +'  <option value="bg">Bulgarian (\u0411\u044A\u043B\u0433\u0430\u0440\u0441\u043A\u0438)</option>'
+                +'  <option value="bn">Bengali (\u09AC\u09BE\u0982\u09B2\u09BE)</option>'
+                +'  <option value="bo">Tibetan (\u0F56\u0F7C\u0F51\u0F0B\u0F66\u0F90\u0F51)</option>'
+                +'  <option value="chr">Cherokee (\u13E3\u13B3\u13A9)</option>'
+                +'  <option value="da">Danish (Dansk)</option>'
+                +'  <option value="de">German (Deutsch)</option>'
+                +'  <option value="dv">Maldivian (\u078B\u07A8\u0788\u07AC\u0780\u07A8)</option>'
+                +'  <option value="el">Greek (\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AC)</option>'
+                +'  <option value="en">English (English)</option>'
+                +'  <option value="es">Spanish (Espa\u00F1ol)</option>'
+                +'  <option value="fa">Persian (\u0641\u0627\u0631\u0633\u06CC)</option>'
+                +'  <option value="fi">Finnish (Suomi)</option>'
+                +'  <option value="fr">French (Fran\u00E7ais)</option>'
+                +'  <option value="gu">Gujarati (\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0)</option>'
+                +'  <option value="iw">Hebrew (\u05E2\u05D1\u05E8\u05D9\u05EA)</option>'
+                +'  <option value="hi">Hindi (\u0939\u093F\u0902\u0926\u0940)</option>'
+                +'  <option value="hu">Hungarian (Magyar)</option>'
+                +'  <option value="hy">Armenian (\u0540\u0561\u0575\u0565\u0580\u0565\u0576)</option>'
+                +'  <option value="in">Indonesian (Bahasa Indonesia)</option>'
+                +'  <option value="is">Icelandic (\u00CDslenska)</option>'
+                +'  <option value="it">Italian (Italiano)</option>'
+                +'  <option value="iu">Inuktitut (\u1403\u14C4\u1483\u144E\u1450\u1466)</option>'
+                +'  <option value="ja">Japanese (\u65E5\u672C\u8A9E)</option>'
+                +'  <option value="ka">Georgian (\u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8)</option>'
+                +'  <option value="km">Khmer (\u1781\u17D2\u1798\u17C2\u179A)</option>'
+                +'  <option value="kn">Kannada (\u0C95\u0CA8\u0CCD\u0CA8\u0CA1)</option>'
+                +'  <option value="ko">Korean (\uD55C\uAD6D\uC5B4)</option>'
+                +'  <option value="lo">Lao (\u0EA5\u0EB2\u0EA7)</option>'
+                +'  <option value="lt">Lithuanian (Lietuvi\u0173)</option>'
+                +'  <option value="ml">Malayalam (\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02)</option>'
+                +'  <option value="my">Myanmar (\u1019\u103C\u1014\u103A\u1019\u102C\u1018\u102C\u101E\u102C)</option>'
+                +'  <option value="ne">Nepali (\u0928\u0947\u092A\u093E\u0932\u0940)</option>'
+                +'  <option value="nl">Dutch (Nederlands)</option>'
+                +'  <option value="no">Norwegian (Norsk)</option>'
+                +'  <option value="or">Oriya (\u0B13\u0B21\u0B3C\u0B3F\u0B06)</option>'
+                +'  <option value="pa">Panjabi (\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40)</option>'
+                +'  <option value="pl">Polish (Polski)</option>'
+                +'  <option value="pt">Portuguese (Portugu\u00EAs)</option>'
+                +'  <option value="ru">Russian (\u0420\u0443\u0441\u0441\u043A\u0438\u0439)</option>'
+                +'  <option value="si">Sinhala (\u0DC3\u0DD2\u0D82\u0DC4\u0DBD)</option>'
+                +'  <option value="sv">Swedish (Svenska)</option>'
+                +'  <option value="ta">Tamil (\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD)</option>'
+                +'  <option value="te">Telugu (\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41)</option>'
+                +'  <option value="th">Thai (\u0E44\u0E17\u0E22)</option>'
+                +'  <option value="tl">Tagalog (Tagalog)</option>'
+                +'  <option value="tr">Turkish (T\u00FCrk\u00E7e)</option>'
+                +'  <option value="ur">Urdu (\uFE8D\uFEAD\uFEA9\uFEED)</option>'
+                +'  <option value="vi">Vietnamese (Ti\u1EBFng Vi\u1EC7t)</option>'
+                +'  <option value="zh">Chinese (\u4E2D\u6587)</option>'
                 +'</select></div></div>'
                 +'<div class="divider-bar"></div>'
                 +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
@@ -348,9 +356,9 @@
             this.$disableHashtags = $('#disable-hashtags');
             this.$disableHashtags.prop('checked', TD.extensions.Trends.isHashtagsDisabled());
             this.$disableHashtags.change(_.bind(this.toggleHashtags, this));
-            this.$newsListId = $('#news-sources');
-            this.$newsListId.val(TD.extensions.Trends.getNewsListId());
-            this.$newsListId.change(_.bind(this.toggleNewsListId, this));
+            this.$lang = $('#news-language');
+            this.$lang.val(TD.extensions.Trends.getNewsLanguage());
+            this.$lang.change(_.bind(this.toggleNewsLanguage, this));
         }).methods({
             destroy: function(a) {
                 this.$fieldset.remove()
@@ -364,9 +372,9 @@
                 var isDisabled = this.$disableHashtags.is(':checked');
                 TD.extensions.Trends.setHashtagsDisabled(isDisabled);
             },
-            toggleNewsListId: function(e) {
-                var source = this.$newsListId.val();
-                TD.extensions.Trends.setNewsListId(source);
+            toggleNewsLanguage: function(e) {
+                var lang = this.$lang.val();
+                TD.extensions.Trends.setNewsLanguage(lang);
             }
         });
 
@@ -391,12 +399,12 @@
 
         TD.extensions = {
             Trends: function() {
-                var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000, newsListId = '86201584';
+                var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000, lang = 'en';
                 function getAllColumns() {
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '3.3.4',
+                    version: '4.0',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
@@ -415,15 +423,15 @@
 
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         if ($.isEmptyObject(settings))
-                            TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsListId': newsListId});
+                            TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsLanguage': lang});
 
                         settings = TD.storage.store.get('TDTrendsColSettings');
                         hashtagsDisabled = settings.hashtagsDisabled;
                         autoUpdateFrequency = settings.autoUpdateFrequency;
-                        if ('newsListId' in settings) {
-                            newsListId = settings.newsListId;
+                        if ('newsLanguage' in settings) {
+                            lang = settings.newsLanguage;
                         } else {
-                            var newSettings = $.extend({}, settings, {newsListId: newsListId});
+                            var newSettings = $.extend({}, settings, {'newsLanguage': lang});
                             TD.storage.store.set('TDTrendsColSettings', newSettings);
                         }
                         this.trackGoogleAnalytics();
@@ -465,14 +473,14 @@
                         autoUpdateFrequency = freq;
                         this.updateAllColumns();
                     },
-                    getNewsListId: function() {
-                        return newsListId;
+                    getNewsLanguage: function() {
+                        return lang;
                     },
-                    setNewsListId: function(source) {
+                    setNewsLanguage: function(newLang) {
                         var colSettings = TD.storage.store.get('TDTrendsColSettings'),
-                            newSettings = $.extend({}, colSettings, {newsListId: source});
+                            newSettings = $.extend({}, colSettings, {'newsLanguage': newLang});
                         TD.storage.store.set('TDTrendsColSettings', newSettings);
-                        newsListId = source;
+                        lang = newLang;
                         this.updateAllColumns();
                     },
                     trackGoogleAnalytics: function() {
