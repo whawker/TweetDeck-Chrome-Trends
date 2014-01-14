@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.0
+// @version      4.0.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -404,7 +404,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '4.0',
+                    version: '4.0.1',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
@@ -421,18 +421,18 @@
                         if(trendColumns.length == 0)
                             this.addColumn();
 
-                        settings = TD.storage.store.get('TDTrendsColSettings');
+                        settings = TD.storage.store.getJSON('TDTrendsColSettings');
                         if ($.isEmptyObject(settings))
-                            TD.storage.store.set('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsLanguage': lang});
+                            TD.storage.store.setJSON('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsLanguage': lang});
 
-                        settings = TD.storage.store.get('TDTrendsColSettings');
+                        settings = TD.storage.store.getJSON('TDTrendsColSettings');
                         hashtagsDisabled = settings.hashtagsDisabled;
                         autoUpdateFrequency = settings.autoUpdateFrequency;
                         if ('newsLanguage' in settings) {
                             lang = settings.newsLanguage;
                         } else {
                             var newSettings = $.extend({}, settings, {'newsLanguage': lang});
-                            TD.storage.store.set('TDTrendsColSettings', newSettings);
+                            TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
                         }
                         this.trackGoogleAnalytics();
                     },
@@ -457,9 +457,9 @@
                         return hashtagsDisabled;
                     },
                     setHashtagsDisabled: function(isDisabled) {
-                        var colSettings = TD.storage.store.get('TDTrendsColSettings'),
+                        var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
                             newSettings = $.extend({}, colSettings, {hashtagsDisabled: isDisabled});
-                        TD.storage.store.set('TDTrendsColSettings', newSettings);
+                        TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
                         hashtagsDisabled = isDisabled;
                         this.updateAllColumns();
                     },
@@ -467,9 +467,9 @@
                         return autoUpdateFrequency;
                     },
                     setAutoUpdateFrequency: function(freq) {
-                        var colSettings = TD.storage.store.get('TDTrendsColSettings'),
+                        var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
                             newSettings = $.extend({}, colSettings, {autoUpdateFrequency: freq});
-                        TD.storage.store.set('TDTrendsColSettings', newSettings);
+                        TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
                         autoUpdateFrequency = freq;
                         this.updateAllColumns();
                     },
@@ -477,9 +477,9 @@
                         return lang;
                     },
                     setNewsLanguage: function(newLang) {
-                        var colSettings = TD.storage.store.get('TDTrendsColSettings'),
+                        var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
                             newSettings = $.extend({}, colSettings, {'newsLanguage': newLang});
-                        TD.storage.store.set('TDTrendsColSettings', newSettings);
+                        TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
                         lang = newLang;
                         this.updateAllColumns();
                     },
