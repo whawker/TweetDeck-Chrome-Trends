@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.0.1
+// @version      4.0.2
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -20,7 +20,7 @@
                 this.$node.find('.column-scroller').addClass('scroll-styled-v');
                 this.$column.on('click', '.link-complex', {column: this.$column}, function(event) {
                     event.preventDefault();
-                    event.data.column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                    event.data.column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                 });
             },
             showTweetStories: function (e) {
@@ -126,8 +126,8 @@
                     self.update();
                 });
                 window.setInterval(function() {
-                    self.$column.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
-                    self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                    self.$column.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+                    self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                 }, 30000);
             },
             getColumnWoeid: function() {
@@ -176,8 +176,8 @@
                             if (!filtered)
                                 trends.push(item);
                         }
-                        self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
-                        self.$navLink.find('.icon-twitter').removeClass('icon-twitter').addClass('icon-trends');
+                        self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+                        self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                         self.setTrends(trends);
                         trends.forEach(self.getNewsForTrend, self);
 
@@ -404,7 +404,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '4.0.1',
+                    version: '4.0.2',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, key, settings;
