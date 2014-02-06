@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.0.2
+// @version      4.0.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -11,7 +11,7 @@
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 (function(window) {
     var $ = window.$, _ = window._, TD, _gaq;
-    $(window.document).on('TD.ready', function() {
+    $(window.document).one('TD.ready', function() {
         TD = window.TD, _gaq = window._gaq;
 
         TD.components.TrendDetailView = TD.components.DetailView.extend(function (e, t) {}).statics({}).methods({
@@ -28,15 +28,15 @@
                     trendCol = TD.extensions.Trends.getColumnByKey(key);
                 this.$column.find('.link-complex-target').text('Back to Trends: ' +trendCol.getTitle());
                 this.chirp = e,
-                this.$tweetDetail = $(TD.ui.template.render("status/tweet_detail", this.chirp.getMainTweet())),
-                this.$find(".js-tweet-detail").html(this.$tweetDetail);
-                this.initialised = !0, this.$tweetDetail.trigger("uiDetailViewActive", {
+                this.$tweetDetail = $(TD.ui.template.render('status/tweet_detail', this.chirp.getMainTweet())),
+                this.$find('.js-tweet-detail').html(this.$tweetDetail);
+                this.initialised = !0, this.$tweetDetail.trigger('uiDetailViewActive', {
                     $chirp: this.$tweetDetail,
                     chirp: this.chirp
                 });
                 if (e.cards) {
-                    var t = TD.ui.template.render("cards/card_layouts", e.cards);
-                    this.$find(".js-tweet-detail").css({'padding': '8px', 'margin-top': '-20px'}).html(t)
+                    var t = TD.ui.template.render('cards/card_layouts', e.cards);
+                    this.$find('.js-tweet-detail').css({'padding': '8px', 'margin-top': '-20px'}).html(t);
                 }
             }
         });
@@ -72,7 +72,7 @@
                 return this.key;
             },
             populate: function() {
-                var locations = [], self = this,
+                var self = this,
                     selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>';
 
                 this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
@@ -91,7 +91,7 @@
                     'GET',
                     this.processTrendLocations,
                     function(rawLocations){
-                        var locations = [], i, j, indent, title = self.getTitle();
+                        var locations = [], i, j, indent, selected, title = self.getTitle();
                         locations.push(rawLocations.shift());
                         for(i in rawLocations) {
                             if(rawLocations[i].placeType.name == 'Town') {
@@ -189,17 +189,35 @@
                 );
             },
             setTrends: function(trends) {
-                var i, item, trendItems = '', promoted = '';
+                var i, item, trendItems = '';
                 for (i in trends) {
                     item = trends[i];
                     trendItems += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="http://www.twitter.com?q=&quot;' +item.query +'&quot;" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="l-table"><div class="tweet-body  l-cell"><p></p></div></div><i class="sprite tweet-dogear"></i></div></div></article>';
                 }
                 this.$column.find('.column-scroller').html(trendItems);
             },
+            _getDateOffset: function(num, datePart) {
+                datePart = datePart || 'hour';
+                var today = new Date().getTime(),
+                    millisecMap = {
+                    'millisecond': 1,
+                    'second': 1000,
+                    'minute': 60000,
+                    'hour': 3600000,
+                    'day': 86400000
+                };
+                if (!millisecMap[datePart])
+                    datePart = 'millisecond';
+                var offsetTime = num * millisecMap[datePart];
+                return new Date(today + offsetTime);
+            },
             getNewsForTrend: function(trend, index, array) {
-                var self = this, trendName = trend.name, lang = TD.extensions.Trends.getNewsLanguage();
-                var request = {
-                    'q': '"' +trendName +'" filter:news',
+                var self = this, 
+                    trendName = trend.name, 
+                    lang = TD.extensions.Trends.getNewsLanguage(),
+                    sinceDate = this._getDateOffset(-12).toISOString().replace(/T.*/, ''),
+                    request = {
+                    'q': '"' +trendName +'" filter:news since:' +sinceDate,
                     'count': 100,
                     'result_type': 'recent',
                     'lang': lang,
@@ -215,7 +233,7 @@
                     function(response) {
                         var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
 
-                        for(var i in statuses) {
+                        for(i in statuses) {
                             tweet = this.processTweet(statuses[i]);
                             if(tweet.cards)
 
@@ -386,11 +404,11 @@
                 newItem = $('<li><a href="#" class="list-link" data-action="trendscol"><strong>Trends Column</strong><i class="chev-right"></i></a></li>');
 
             $(menu.parent()).append(newItem);
-            newItem.on('click', function(event) {
-                settings.$optionList.removeClass("selected");
+            newItem.on('click', function() {
+                settings.$optionList.removeClass('selected');
                 settings.currentTab.destroy();
                 settings.currentTab = new TD.components.TrendsColSettings;
-                settings.currentTabName = "trendscol", $(this).addClass("selected");
+                settings.currentTabName = 'trendscol', $(this).addClass('selected');
             });
             settings.$optionList.push(newItem.get(0));
 
@@ -404,16 +422,16 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '4.0.2',
+                    version: '4.0.3',
                     init: function() {
                         var allTdColumns = getAllColumns(),
-                            tdCol, colTitle, colKey, trendCol, key, settings;
+                            tdCol, colTitle, colKey, trendCol, settings;
                         //Find out which columns are trend columns
                         for(tdCol in allTdColumns) {
                             colTitle = allTdColumns[tdCol].model.getTitle();
                             if(colTitle.indexOf('Trends: ') > -1) {
                                 colKey = allTdColumns[tdCol].model.getKey();
-                                trendCol = new TD.components.TrendsColumn;
+                                trendCol = new TD.components.TrendsColumn();
                                 trendCol._init(colKey);
                                 trendColumns.push(trendCol);
                             }
@@ -437,7 +455,7 @@
                         this.trackGoogleAnalytics();
                     },
                     addColumn: function() {
-                        trendCol = new TD.components.TrendsColumn;
+                        var trendCol = new TD.components.TrendsColumn();
                         trendCol._init();
                         trendColumns.push(trendCol);
                     },
