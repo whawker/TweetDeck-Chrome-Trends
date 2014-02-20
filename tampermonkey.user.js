@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.0.3
+// @version      4.0.4
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -154,6 +154,10 @@
                 if (hashtagsDisabled)
                     options.exclude = 'hashtags';
                 this.clearSchedule();
+                if (this.$column.hasClass('is-shifted-1')) {
+                    this._scheduleUpdate(100);
+                    return;
+                }
                 this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
                 this.client.makeTwitterCall(
                     'https://api.twitter.com/1.1/trends/place.json',
@@ -181,12 +185,16 @@
                         self.setTrends(trends);
                         trends.forEach(self.getNewsForTrend, self);
 
-                        var update = window.setTimeout(function() { self.update() }, TD.extensions.Trends.getAutoUpdateFrequency());
-                        self.scheduledUpdates.push(update);
+                        self._scheduleUpdate(TD.extensions.Trends.getAutoUpdateFrequency());
                     },
                     function(){},
                     function(){}
                 );
+            },
+            _scheduleUpdate: function(time) {
+                var self = this,
+                    update = window.setTimeout(function() { self.update() }, time);
+                this.scheduledUpdates.push(update);
             },
             setTrends: function(trends) {
                 var i, item, trendItems = '';
@@ -422,7 +430,7 @@
                     return TD.controller.columnManager.getAllOrdered();
                 }
                 return {
-                    version: '4.0.3',
+                    version: '4.0.4',
                     init: function() {
                         var allTdColumns = getAllColumns(),
                             tdCol, colTitle, colKey, trendCol, settings;
