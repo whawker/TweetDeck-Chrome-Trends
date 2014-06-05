@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1
+// @version      4.1.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -104,7 +104,7 @@
                     rawLocations.sort(function(e, t) {
                         var n = e.sortString,
                             r = t.sortString;
-                        return n < r ? -1 : n > r ? 1 : 0
+                        return n < r ? -1 : n > r ? 1 : 0;
                     });
                     locations = locations.concat(rawLocations);
                     locations.forEach(function(loc) {
@@ -135,6 +135,7 @@
             return this.columnWoeid;
         },
         setColumnWoeid: function(woeid) {
+            console.log('TD.extensions.Trends setting column woeid:', woeid);
             this.columnWoeid = woeid;
             this.update();
         },
@@ -160,18 +161,22 @@
                 return;
             }
             this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
+            console.log('TD.extensions.Trends fetching trends/place.json with:', options);
             this.client.makeTwitterCall(
                 'https://api.twitter.com/1.1/trends/place.json',
                 options,
                 'GET',
                 function(response) {
+                    console.log('TD.extensions.Trends fetching trends/place.json got a response');
                     var trendsResponse = this.processTrends(response),
                         globalFilter = TD.settings.getGlobalFilter(),
                         i, j, k, filtered, trendNameParts, filters = [], trends = [];
+                    console.log('TD.extensions.Trends processed trends/place.json:', trendsResponse);
                     globalFilter.forEach(function(f) {
                         if (f.type == 'phrase')
                             filters.push(f.value);
                     });
+                    console.log('TD.extensions.Trends found global filters:', filters);
                     
                     trends = trendsResponse.trends.filter(function(t) {
                         trendName = t.name.toLowerCase();
@@ -183,9 +188,11 @@
                         });
                         return !filtered;
                     });
+                    console.log('TD.extensions.Trends filtered trends and was left with:', trends);
 
                     self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                     self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+                    console.log('TD.extensions.Trends is setting trends');
                     self.setTrends(trends);
                     trends.forEach(self.getNewsForTrend, self);
 
@@ -204,6 +211,7 @@
             var trendItems = trends.reduce(function(htmlString, item) {
                 return htmlString += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="http://www.twitter.com?q=&quot;' +item.query +'&quot;" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="l-table"><div class="tweet-body  l-cell"><p></p></div></div><i class="sprite tweet-dogear"></i></div></div></article>';
             }, '');
+            console.log('TD.extensions.Trends updated the column with HTML string of length:', trendItems.length);
             this.$column.find('.column-scroller').html(trendItems);
         },
         _getDateOffset: function(num, datePart) {
@@ -221,7 +229,8 @@
             var offsetTime = num * millisecMap[datePart];
             return new Date(today + offsetTime);
         },
-        getNewsForTrend: function(trend, index, array) {
+        getNewsForTrend: function(trend, index, arr) {
+            console.log('TD.extensions.Trends is fetching new for:', trend.name);
             var self = this, 
                 trendName = trend.name, 
                 lang = TD.extensions.Trends.getNewsLanguage(),
@@ -235,12 +244,14 @@
                 'include_user_entities': 1,
                 'include_cards': 1
             };
+            console.log('TD.extensions.Trends fetching search/tweets.json with:', request);
 
             self.client.makeTwitterCall(
                 'https://api.twitter.com/1.1/search/tweets.json',
                 request,
                 'GET',
                 function(response) {
+                    console.log('TD.extensions.Trends fetching search/tweets.json got a response');
                     var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
 
                     for(i in statuses) {
@@ -278,7 +289,7 @@
                             }
                         }
                     }
-                    
+                    console.log('TD.extensions.Trends number of news stories matching '+trendName+':', newsArr.length);
                     if (newsArr.length) {
                          //Sort by highest num of references to trend
                         newsArr.sort(function(value1,value2){ return value2.count - value1.count; });
@@ -308,60 +319,10 @@
     });
 
     TD.components.TrendsColSettings = TD.components.Base.extend(function() {
+        var langOptionsHTML = this.getNewsLanguageOptionHTML();
         var settingsForm = '<fieldset id="global_filter_settings"><legend class="frm-legend">Trends Column Settings</legend>'
             +'<div class="control-group"><label for="lang" class="control-label" style="width:100px; text-align: left;">News Language</label><div class="controls" style="margin-left:100px"><select id="news-language" name="news-language">'
-            +'  <option value="all" selected="selected">Any Language</option>'
-            +'  <option value="am">Amharic (\u12A0\u121B\u122D\u129B)</option>'
-            +'  <option value="ar">Arabic (\u0627\u0644\u0639\u0631\u0628\u064A\u0629)</option>'
-            +'  <option value="bg">Bulgarian (\u0411\u044A\u043B\u0433\u0430\u0440\u0441\u043A\u0438)</option>'
-            +'  <option value="bn">Bengali (\u09AC\u09BE\u0982\u09B2\u09BE)</option>'
-            +'  <option value="bo">Tibetan (\u0F56\u0F7C\u0F51\u0F0B\u0F66\u0F90\u0F51)</option>'
-            +'  <option value="chr">Cherokee (\u13E3\u13B3\u13A9)</option>'
-            +'  <option value="da">Danish (Dansk)</option>'
-            +'  <option value="de">German (Deutsch)</option>'
-            +'  <option value="dv">Maldivian (\u078B\u07A8\u0788\u07AC\u0780\u07A8)</option>'
-            +'  <option value="el">Greek (\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AC)</option>'
-            +'  <option value="en">English (English)</option>'
-            +'  <option value="es">Spanish (Espa\u00F1ol)</option>'
-            +'  <option value="fa">Persian (\u0641\u0627\u0631\u0633\u06CC)</option>'
-            +'  <option value="fi">Finnish (Suomi)</option>'
-            +'  <option value="fr">French (Fran\u00E7ais)</option>'
-            +'  <option value="gu">Gujarati (\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0)</option>'
-            +'  <option value="iw">Hebrew (\u05E2\u05D1\u05E8\u05D9\u05EA)</option>'
-            +'  <option value="hi">Hindi (\u0939\u093F\u0902\u0926\u0940)</option>'
-            +'  <option value="hu">Hungarian (Magyar)</option>'
-            +'  <option value="hy">Armenian (\u0540\u0561\u0575\u0565\u0580\u0565\u0576)</option>'
-            +'  <option value="in">Indonesian (Bahasa Indonesia)</option>'
-            +'  <option value="is">Icelandic (\u00CDslenska)</option>'
-            +'  <option value="it">Italian (Italiano)</option>'
-            +'  <option value="iu">Inuktitut (\u1403\u14C4\u1483\u144E\u1450\u1466)</option>'
-            +'  <option value="ja">Japanese (\u65E5\u672C\u8A9E)</option>'
-            +'  <option value="ka">Georgian (\u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8)</option>'
-            +'  <option value="km">Khmer (\u1781\u17D2\u1798\u17C2\u179A)</option>'
-            +'  <option value="kn">Kannada (\u0C95\u0CA8\u0CCD\u0CA8\u0CA1)</option>'
-            +'  <option value="ko">Korean (\uD55C\uAD6D\uC5B4)</option>'
-            +'  <option value="lo">Lao (\u0EA5\u0EB2\u0EA7)</option>'
-            +'  <option value="lt">Lithuanian (Lietuvi\u0173)</option>'
-            +'  <option value="ml">Malayalam (\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02)</option>'
-            +'  <option value="my">Myanmar (\u1019\u103C\u1014\u103A\u1019\u102C\u1018\u102C\u101E\u102C)</option>'
-            +'  <option value="ne">Nepali (\u0928\u0947\u092A\u093E\u0932\u0940)</option>'
-            +'  <option value="nl">Dutch (Nederlands)</option>'
-            +'  <option value="no">Norwegian (Norsk)</option>'
-            +'  <option value="or">Oriya (\u0B13\u0B21\u0B3C\u0B3F\u0B06)</option>'
-            +'  <option value="pa">Panjabi (\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40)</option>'
-            +'  <option value="pl">Polish (Polski)</option>'
-            +'  <option value="pt">Portuguese (Portugu\u00EAs)</option>'
-            +'  <option value="ru">Russian (\u0420\u0443\u0441\u0441\u043A\u0438\u0439)</option>'
-            +'  <option value="si">Sinhala (\u0DC3\u0DD2\u0D82\u0DC4\u0DBD)</option>'
-            +'  <option value="sv">Swedish (Svenska)</option>'
-            +'  <option value="ta">Tamil (\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD)</option>'
-            +'  <option value="te">Telugu (\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41)</option>'
-            +'  <option value="th">Thai (\u0E44\u0E17\u0E22)</option>'
-            +'  <option value="tl">Tagalog (Tagalog)</option>'
-            +'  <option value="tr">Turkish (T\u00FCrk\u00E7e)</option>'
-            +'  <option value="ur">Urdu (\uFE8D\uFEAD\uFEA9\uFEED)</option>'
-            +'  <option value="vi">Vietnamese (Ti\u1EBFng Vi\u1EC7t)</option>'
-            +'  <option value="zh">Chinese (\u4E2D\u6587)</option>'
+            +langOptionsHTML
             +'</select></div></div>'
             +'<div class="divider-bar"></div>'
             +'<div class="cf" id="auto-update-frequency"><label><b>Auto Update Frequency</b></label>'
@@ -389,7 +350,7 @@
         this.$lang.change(_.bind(this.toggleNewsLanguage, this));
     }).methods({
         destroy: function(a) {
-            this.$fieldset.remove()
+            this.$fieldset.remove();
         },
         updateAutoUpdateFrequency: function(e) {
             if($(this).is(':checked')) {
@@ -403,11 +364,19 @@
         toggleNewsLanguage: function(e) {
             var lang = this.$lang.val();
             TD.extensions.Trends.setNewsLanguage(lang);
+        },
+        getNewsLanguageOptionHTML: function() {
+            var langs = TD.extensions.Trends.getAllLanguages();
+            var html = '';
+            for (var code in langs) {
+                html += '<option value="' +code +'">' +langs[code] +'</option>';
+            }
+            return html;
         }
     });
 
     //Override
-    var TDGlobalSettings = TD.components.GlobalSettings
+    var TDGlobalSettings = TD.components.GlobalSettings;
     TD.components.GlobalSettings = function() {
         var settings = new TDGlobalSettings,
             menu = settings.$optionList,
@@ -423,15 +392,68 @@
         settings.$optionList.push(newItem.get(0));
 
         return settings;
-    }
+    };
 
     TD.extensions = {
         Trends: function() {
-            var trendColumns = [], hashtagsDisabled, autoUpdateFrequency = 300000, lang = 'en';
+            var trendColumns = [];
+            var newsLangs = {
+                'all': 'Any Language',
+                'am': 'Amharic (\u12A0\u121B\u122D\u129B)',
+                'ar': 'Arabic (\u0627\u0644\u0639\u0631\u0628\u064A\u0629)',
+                'bg': 'Bulgarian (\u0411\u044A\u043B\u0433\u0430\u0440\u0441\u043A\u0438)',
+                'bn': 'Bengali (\u09AC\u09BE\u0982\u09B2\u09BE)',
+                'bo': 'Tibetan (\u0F56\u0F7C\u0F51\u0F0B\u0F66\u0F90\u0F51)',
+                'chr': 'Cherokee (\u13E3\u13B3\u13A9)',
+                'da': 'Danish (Dansk)',
+                'de': 'German (Deutsch)',
+                'dv': 'Maldivian (\u078B\u07A8\u0788\u07AC\u0780\u07A8)',
+                'el': 'Greek (\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AC)',
+                'en': 'English (English)',
+                'es': 'Spanish (Espa\u00F1ol)',
+                'fa': 'Persian (\u0641\u0627\u0631\u0633\u06CC)',
+                'fi': 'Finnish (Suomi)',
+                'fr': 'French (Fran\u00E7ais)',
+                'gu': 'Gujarati (\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0)',
+                'iw': 'Hebrew (\u05E2\u05D1\u05E8\u05D9\u05EA)',
+                'hi': 'Hindi (\u0939\u093F\u0902\u0926\u0940)',
+                'hu': 'Hungarian (Magyar)',
+                'hy': 'Armenian (\u0540\u0561\u0575\u0565\u0580\u0565\u0576)',
+                'in': 'Indonesian (Bahasa Indonesia)',
+                'is': 'Icelandic (\u00CDslenska)',
+                'it': 'Italian (Italiano)',
+                'iu': 'Inuktitut (\u1403\u14C4\u1483\u144E\u1450\u1466)',
+                'ja': 'Japanese (\u65E5\u672C\u8A9E)',
+                'ka': 'Georgian (\u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8)',
+                'km': 'Khmer (\u1781\u17D2\u1798\u17C2\u179A)',
+                'kn': 'Kannada (\u0C95\u0CA8\u0CCD\u0CA8\u0CA1)',
+                'ko': 'Korean (\uD55C\uAD6D\uC5B4)',
+                'lo': 'Lao (\u0EA5\u0EB2\u0EA7)',
+                'lt': 'Lithuanian (Lietuvi\u0173)',
+                'ml': 'Malayalam (\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02)',
+                'my': 'Myanmar (\u1019\u103C\u1014\u103A\u1019\u102C\u1018\u102C\u101E\u102C)',
+                'ne': 'Nepali (\u0928\u0947\u092A\u093E\u0932\u0940)',
+                'nl': 'Dutch (Nederlands)',
+                'no': 'Norwegian (Norsk)',
+                'or': 'Oriya (\u0B13\u0B21\u0B3C\u0B3F\u0B06)',
+                'pa': 'Panjabi (\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40)',
+                'pl': 'Polish (Polski)',
+                'pt': 'Portuguese (Portugu\u00EAs)',
+                'ru': 'Russian (\u0420\u0443\u0441\u0441\u043A\u0438\u0439)',
+                'si': 'Sinhala (\u0DC3\u0DD2\u0D82\u0DC4\u0DBD)',
+                'sv': 'Swedish (Svenska)',
+                'ta': 'Tamil (\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD)',
+                'te': 'Telugu (\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41)',
+                'th': 'Thai (\u0E44\u0E17\u0E22)',
+                'tl': 'Tagalog (Tagalog)',
+                'tr': 'Turkish (T\u00FCrk\u00E7e)',
+                'ur': 'Urdu (\uFE8D\uFEAD\uFEA9\uFEED)',
+                'vi': 'Vietnamese (Ti\u1EBFng Vi\u1EC7t)',
+                'zh': 'Chinese (\u4E2D\u6587)'
+            };
             return {
-                version: '4.1',
+                version: '4.1.1',
                 init: function() {
-                    var settings;
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
                         var colTitle = col.model.getTitle();
@@ -446,20 +468,49 @@
                     if(trendColumns.length == 0)
                         this.addColumn();
 
-                    settings = TD.storage.store.getJSON('TDTrendsColSettings');
-                    if ($.isEmptyObject(settings))
-                        TD.storage.store.setJSON('TDTrendsColSettings', {'hashtagsDisabled': false, 'autoUpdateFrequency': autoUpdateFrequency, 'newsLanguage': lang});
-
-                    settings = TD.storage.store.getJSON('TDTrendsColSettings');
-                    hashtagsDisabled = settings.hashtagsDisabled;
-                    autoUpdateFrequency = settings.autoUpdateFrequency;
-                    if (settings.newsLanguage) {
-                        lang = settings.newsLanguage;
-                    } else {
-                        var newSettings = $.extend({}, settings, {'newsLanguage': lang});
-                        TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
-                    }
+                    this.verifySettings();
                     this.trackGoogleAnalytics();
+                },
+                getDefaultSettings: function() {
+                    return {
+                        'hashtagsDisabled': false, 
+                        'autoUpdateFrequency': 300000, 
+                        'newsLanguage': 'en'
+                    };
+                },
+                getStoreSettings: function() {
+                    return TD.storage.store.getJSON('TDTrendsColSettings');
+                },
+                setStoreSettings: function(settings) {
+                    return TD.storage.store.setJSON('TDTrendsColSettings', settings);
+                },
+                getStoreSetting: function(name) {
+                    var settings = this.getStoreSettings();
+                    if (typeof settings[name] === 'undefined') {
+                        console.log('TD.extensions.Trends attempting to fetch undefined setting "' +name +'"');
+                        return false;
+                    }
+                    return settings[name];
+                },
+                setStoreSetting: function(name, value) {
+                    var settings = this.getStoreSettings();
+                    settings[name] = value;
+                    this.setStoreSettings(settings);
+                },
+                verifySettings: function() {
+                    var settings = this.getStoreSettings(),
+                        defaultSettings = this.getDefaultSettings();
+
+                    if (typeof settings.hashtagsDisabled !== 'boolean')
+                        settings.hashtagsDisabled = defaultSettings.hashtagsDisabled;
+
+                    if (typeof settings.autoUpdateFrequency !== 'number' || isNaN(settings.autoUpdateFrequency))
+                        settings.autoUpdateFrequency = defaultSettings.autoUpdateFrequency;
+
+                    if (typeof settings.newsLanguage !== 'string' || $.inArray(settings.newsLanguage, this.getAllLanguageCodes()) === -1)
+                        settings.newsLanguage = defaultSettings.newsLanguage;
+
+                    TD.storage.store.setJSON('TDTrendsColSettings', settings);
                 },
                 addColumn: function() {
                     var trendCol = new TD.components.TrendsColumn();
@@ -476,7 +527,7 @@
                     if (result.length === 1)
                         return result[0];
                     
-                    return false
+                    return false;
                 },
                 updateAllColumns: function() {
                     trendColumns.map(function(col) {
@@ -484,34 +535,34 @@
                     });
                 },
                 isHashtagsDisabled: function() {
-                    return hashtagsDisabled;
+                    return this.getStoreSetting('hashtagsDisabled');
                 },
                 setHashtagsDisabled: function(isDisabled) {
-                    var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
-                        newSettings = $.extend({}, colSettings, {hashtagsDisabled: isDisabled});
-                    TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
-                    hashtagsDisabled = isDisabled;
+                    this.setStoreSetting('hashtagsDisabled', isDisabled);
                     this.updateAllColumns();
                 },
                 getAutoUpdateFrequency: function() {
-                    return autoUpdateFrequency;
+                    return this.getStoreSetting('autoUpdateFrequency');
                 },
                 setAutoUpdateFrequency: function(freq) {
-                    var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
-                        newSettings = $.extend({}, colSettings, {autoUpdateFrequency: freq});
-                    TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
-                    autoUpdateFrequency = freq;
-                    this.updateAllColumns();
+                    var freq = parseInt(freq, 10);
+                    if (isNaN(freq) === false) {
+                        this.setStoreSetting('autoUpdateFrequency', freq);
+                        this.updateAllColumns();
+                    }
                 },
                 getNewsLanguage: function() {
-                    return lang;
+                    return this.getStoreSetting('newsLanguage');
                 },
                 setNewsLanguage: function(newLang) {
-                    var colSettings = TD.storage.store.getJSON('TDTrendsColSettings'),
-                        newSettings = $.extend({}, colSettings, {'newsLanguage': newLang});
-                    TD.storage.store.setJSON('TDTrendsColSettings', newSettings);
-                    lang = newLang;
+                    this.setStoreSetting('newsLanguage', newLang);
                     this.updateAllColumns();
+                },
+                getAllLanguages: function() {
+                    return newsLangs;
+                },
+                getAllLanguageCodes: function() {
+                    return Object.keys(newsLangs);
                 },
                 trackGoogleAnalytics: function() {
                     //Google analytics tracking, just to see if anyone uses this
@@ -532,7 +583,7 @@
                         return;
                     }
                 }
-            }
+            };
         }()
     };
     
