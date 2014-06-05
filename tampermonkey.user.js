@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1.1
+// @version      4.1.2
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -172,6 +172,8 @@
                         globalFilter = TD.settings.getGlobalFilter(),
                         i, j, k, filtered, trendNameParts, filters = [], trends = [];
                     console.log('TD.extensions.Trends processed trends/place.json:', trendsResponse);
+                    if (typeof globalFilter === 'undefined')
+                        globalFilter = [];
                     globalFilter.forEach(function(f) {
                         if (f.type == 'phrase')
                             filters.push(f.value);
@@ -452,7 +454,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.1.1',
+                version: '4.1.2',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
