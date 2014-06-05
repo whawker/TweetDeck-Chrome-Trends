@@ -135,7 +135,6 @@
             return this.columnWoeid;
         },
         setColumnWoeid: function(woeid) {
-            console.log('TD.extensions.Trends setting column woeid:', woeid);
             this.columnWoeid = woeid;
             this.update();
         },
@@ -161,25 +160,21 @@
                 return;
             }
             this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
-            console.log('TD.extensions.Trends fetching trends/place.json with:', options);
             this.client.makeTwitterCall(
                 'https://api.twitter.com/1.1/trends/place.json',
                 options,
                 'GET',
                 function(response) {
-                    console.log('TD.extensions.Trends fetching trends/place.json got a response');
                     var trendsResponse = this.processTrends(response),
                         globalFilter = TD.settings.getGlobalFilter(),
                         i, j, k, filtered, trendNameParts, filters = [], trends = [];
-                    console.log('TD.extensions.Trends processed trends/place.json:', trendsResponse);
                     if (typeof globalFilter === 'undefined')
                         globalFilter = [];
                     globalFilter.forEach(function(f) {
                         if (f.type == 'phrase')
                             filters.push(f.value);
                     });
-                    console.log('TD.extensions.Trends found global filters:', filters);
-                    
+
                     trends = trendsResponse.trends.filter(function(t) {
                         trendName = t.name.toLowerCase();
                         if (filters.indexOf(trendName) !== -1)
@@ -190,11 +185,9 @@
                         });
                         return !filtered;
                     });
-                    console.log('TD.extensions.Trends filtered trends and was left with:', trends);
 
                     self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                     self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
-                    console.log('TD.extensions.Trends is setting trends');
                     self.setTrends(trends);
                     trends.forEach(self.getNewsForTrend, self);
 
@@ -213,7 +206,6 @@
             var trendItems = trends.reduce(function(htmlString, item) {
                 return htmlString += '<article class="stream-item" style="min-height: 50px;"><div class="item-box item-content"><div class="tweet" style="padding-left: 0;"><header class="tweet-header"><a class="account-link" href="http://www.twitter.com?q=&quot;' +item.query +'&quot;" rel="hashtag"><b class="fullname">'+item.name +'</b></a></header><div class="l-table"><div class="tweet-body  l-cell"><p></p></div></div><i class="sprite tweet-dogear"></i></div></div></article>';
             }, '');
-            console.log('TD.extensions.Trends updated the column with HTML string of length:', trendItems.length);
             this.$column.find('.column-scroller').html(trendItems);
         },
         _getDateOffset: function(num, datePart) {
@@ -232,7 +224,6 @@
             return new Date(today + offsetTime);
         },
         getNewsForTrend: function(trend, index, arr) {
-            console.log('TD.extensions.Trends is fetching new for:', trend.name);
             var self = this, 
                 trendName = trend.name, 
                 lang = TD.extensions.Trends.getNewsLanguage(),
@@ -246,14 +237,12 @@
                 'include_user_entities': 1,
                 'include_cards': 1
             };
-            console.log('TD.extensions.Trends fetching search/tweets.json with:', request);
 
             self.client.makeTwitterCall(
                 'https://api.twitter.com/1.1/search/tweets.json',
                 request,
                 'GET',
                 function(response) {
-                    console.log('TD.extensions.Trends fetching search/tweets.json got a response');
                     var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
 
                     for(i in statuses) {
@@ -291,7 +280,7 @@
                             }
                         }
                     }
-                    console.log('TD.extensions.Trends number of news stories matching '+trendName+':', newsArr.length);
+
                     if (newsArr.length) {
                          //Sort by highest num of references to trend
                         newsArr.sort(function(value1,value2){ return value2.count - value1.count; });
