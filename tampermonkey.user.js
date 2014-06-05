@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1.2
+// @version      4.1.3
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -443,7 +443,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.1.2',
+                version: '4.1.3',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
