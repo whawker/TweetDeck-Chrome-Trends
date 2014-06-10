@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1.3
+// @version      4.1.4
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -229,14 +229,14 @@
                 lang = TD.extensions.Trends.getNewsLanguage(),
                 sinceDate = this._getDateOffset(-12).toISOString().replace(/T.*/, ''),
                 request = {
-                'q': '"' +trendName +'" filter:news since:' +sinceDate,
-                'count': 100,
-                'result_type': 'recent',
-                'lang': lang,
-                'include_entities': 1,
-                'include_user_entities': 1,
-                'include_cards': 1
-            };
+                    'q': '"' +trendName +'" filter:news lang:' +lang +' since:' +sinceDate,
+                    'count': 100,
+                    'result_type': 'recent',
+                    'lang': lang,
+                    'include_entities': 1,
+                    'include_user_entities': 1,
+                    'include_cards': 1
+                };
 
             self.client.makeTwitterCall(
                 'https://api.twitter.com/1.1/search/tweets.json',
@@ -443,7 +443,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.1.3',
+                version: '4.1.4',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
