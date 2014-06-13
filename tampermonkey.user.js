@@ -243,8 +243,22 @@
                 request,
                 'GET',
                 function(response) {
-                    var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
-
+                    var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], 
+                    newsStory, safeNewsTitle, interestingWords = [], trendNameMatch,
+                    boringWords = ['and', 'the', 'for', 'from', 'all', 'his', 'her', 'they', 
+                                    'who', 'what', 'when', 'where', 'why', 'how', 'our', 'you',
+                                    'your', 'you\'re', 'are', 'about', 'say', 'says', 'i\'ll', 
+                                    'doing', 'this', 'that', 'them', 'use', 'been', 'have'],
+                    trendWords = trendName.split(' ');
+                    
+                    if (trendWords.length > 1) {
+                        interestingWords = trendName.split(' ').filter(function(word) {
+                            return boringWords.indexOf(word) === -1 && word.length > 2;
+                        });
+                    }
+                    interestingWords.push(trendName);                    
+                    trendNameMatch = new RegExp('(?:^|\\s)(' +interestingWords.join('|') + ')(?:\\s|$)', 'gmi');
+                    
                     for(i in statuses) {
                         tweet = this.processTweet(statuses[i]);
                         if(tweet.cards)
@@ -263,20 +277,19 @@
                             
                             //Make sure we haven't added this story already
                             if (seenStories.indexOf(safeNewsTitle) == -1) {
-                                var tweetText = newsStory.title +' ' +newsStory.description,
-                                    trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
-                                    matchCount = 0;
+                                var matchCount = 0;
                                 //Match trend name, include word boundaries to prevent partial word matching
-                                tweetText.replace(trendNameMatch, function(all, match){
-                                    matchCount++;
+                                newsStory.title.replace(trendNameMatch, function(all, match){
+                                    matchCount += 5;
                                 });
-                                if (matchCount) {
-                                    newsArr.push({
-                                        story: newsStory,
-                                        count: matchCount
-                                    });
-                                    seenStories.push(safeNewsTitle);
-                                }
+                                newsStory.description.replace(trendNameMatch, function(all, match){
+                                    matchCount += 3;
+                                });
+                                newsArr.push({
+                                    story: newsStory,
+                                    count: matchCount
+                                });
+                                seenStories.push(safeNewsTitle);
                             }
                         }
                     }
