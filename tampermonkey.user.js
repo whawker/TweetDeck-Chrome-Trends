@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1.4
+// @version      4.1.5
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -63,7 +63,11 @@
             this.populate();
         },
         _createColumn: function() {
-            var col = TD.controller.columnManager.makeColumnFor('other', 'twitter', this.account.getKey(), undefined);
+            var col = TD.controller.columnManager.makeColumnFor({
+                type: 'other',
+                service: 'twitter',
+                accountKey: this.account.getKey()
+            });
             col.model.setTitle('Trends: United Kingdom');
             TD.controller.columnManager.addColumnToUI(col);
             return col;
@@ -443,7 +447,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.1.4',
+                version: '4.1.5',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
