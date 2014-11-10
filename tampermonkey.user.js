@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.1.5
+// @version      4.2.0
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -11,9 +11,20 @@
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 (function(window) {
     var $ = window.$, _ = window._, TD = window.TD, _gaq = window._gaq;
-    
+
     TD.util.columnUtils.filterableColumnTypes.push(TD.util.columnUtils.columnMetaTypes.UNKNOWN);
-    
+
+    TD.services.TwitterClient.prototype.getTrendsCustom = function(params, success, error) {
+        this.makeTwitterCall(
+            this.API_BASE_URL+"trends/place.json",
+            params,
+            'GET',
+            this.processTrends,
+            success,
+            error
+        );
+    };
+
     TD.components.TrendDetailView = TD.components.DetailView.extend(function (e, t) {}).statics({}).methods({
         _render: function () {
             this.$node = $(TD.ui.template.render("status/tweet_detail_wrapper"));
@@ -27,10 +38,11 @@
             var key = this.column.model.getKey(),
                 trendCol = TD.extensions.Trends.getColumnByKey(key);
             this.$column.find('.link-complex-target').text('Back to Trends: ' +trendCol.getTitle());
-            this.chirp = e,
-            this.$tweetDetail = $(TD.ui.template.render('status/tweet_detail', this.chirp.getMainTweet())),
+            this.chirp = e;
+            this.$tweetDetail = $(TD.ui.template.render('status/tweet_detail', this.chirp.getMainTweet()));
             this.$find('.js-tweet-detail').html(this.$tweetDetail);
-            this.initialised = !0, this.$tweetDetail.trigger('uiDetailViewActive', {
+            this.initialised = true;
+            this.$tweetDetail.trigger('uiDetailViewActive', {
                 $chirp: this.$tweetDetail,
                 chirp: this.chirp
             });
@@ -77,7 +89,10 @@
         },
         populate: function() {
             var self = this,
-                selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>';
+                selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>',
+                title = self.getTitle(),
+                accounts = TD.storage.accountController.getAccountsForService('twitter'),
+                html;
 
             this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
             this.$locationSelect = this.$column.find('.trend-location');
@@ -89,42 +104,41 @@
                     self.setColumnWoeid(loc.val());
                 });
             });
-            this.client.makeTwitterCall(
-                'https://api.twitter.com/1.1/trends/available.json',
-                {},
-                'GET',
-                this.processTrendLocations,
-                function(rawLocations){
-                    var locations = [], i, j, indent, selected, title = self.getTitle();
-                    locations.push(rawLocations.shift());
-                    rawLocations = rawLocations.map(function(loc) {
-                        if (loc.placeType.name == 'Town') {
-                            loc.sortString = loc.country + loc.name;
-                        } else {
-                            loc.sortString = loc.country;
-                        }
-                        return loc;
-                    });
-                    rawLocations.sort(function(e, t) {
-                        var n = e.sortString,
-                            r = t.sortString;
+
+            html = accounts.reduce(function(html, acc) {
+                var selected = '', key = acc.getKey(), username = acc.getUsername();
+                if (username === title)
+                    selected = 'selected';
+
+                return html + '<option ' +selected +' value="' +key +'">' +username +'</option>';
+            }, '<optgroup label="Tailored Trends">');
+            html += '</optgroup>';
+
+            this.client.getTrendLocations(
+                function(locations){
+                    locations.sort(function(e, t) {
+                        var n = (e.sortString === 'Worldwide') ? '' : e.sortString,
+                            r = (t.sortString === 'Worldwide') ? '' : t.sortString;
                         return n < r ? -1 : n > r ? 1 : 0;
                     });
-                    locations = locations.concat(rawLocations);
-                    locations.forEach(function(loc) {
-                        indent = '', selected = '';
-                        if (loc.name == title) {
-                            self.setColumnWoeid(loc.woeid);
+
+                    html = locations.reduce(function(html, loc) {
+                        var indent = '', selected = '';
+                        if (loc.name === title)
                             selected = 'selected';
-                        }
+
                         if (loc.placeType.name == 'Town')
                             indent = '&nbsp;&nbsp;&nbsp;&nbsp;';
-                        self.$locationSelect.append('<option ' +selected +' value="' +loc.woeid +'">' +indent +loc.name +'</option>');
-                    });
+
+                        return html + '<option ' +selected +' value="' +loc.woeid +'">' +indent +loc.name +'</option>';
+                    }, html);
+
+                    self.$locationSelect.html(html).find('option:selected').change();
                 },
-                function(){}
+                $.noop
             );
-            var updaterHtml = '<div class="update-countdown" style="height: 14px; position: absolute; bottom: 0; right: 0; padding: 6px; text-align: right; width: -webkit-calc(100% - 12px);"><a href="#" class="update-now" style="float: right;">Update now</a></div>';
+
+            var updaterHtml = '<div class="update-countdown" style="height: 14px; position: absolute; bottom: 0; right: 0; padding: 6px; text-align: right; width: calc(100% - 12px);"><a href="#" class="update-now" style="float: right;">Update now</a></div>';
             this.$column.find('.column-scroller').css({'margin-bottom': '26px'}).after(updaterHtml);
             this.$column.find('.update-now').on('click', function(e) {
                 e.preventDefault();
@@ -155,51 +169,59 @@
             this.scheduledUpdates = [];
         },
         update: function() {
-            var self = this, hashtagsDisabled = TD.extensions.Trends.isHashtagsDisabled(), options = {id: this.getColumnWoeid()};
-            if (hashtagsDisabled)
-                options.exclude = 'hashtags';
+            var self = this, woeid = this.getColumnWoeid(),
+                globalFilter = TD.settings.getGlobalFilter() || [], filters = [];
+
             this.clearSchedule();
+
             if (this.$column.hasClass('is-shifted-1')) {
                 this._scheduleUpdate(100);
                 return;
             }
+
             this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
-            this.client.makeTwitterCall(
-                'https://api.twitter.com/1.1/trends/place.json',
-                options,
-                'GET',
-                function(response) {
-                    var trendsResponse = this.processTrends(response),
-                        globalFilter = TD.settings.getGlobalFilter(),
-                        i, j, k, filtered, trendNameParts, filters = [], trends = [];
-                    if (typeof globalFilter === 'undefined')
-                        globalFilter = [];
-                    globalFilter.forEach(function(f) {
-                        if (f.type == 'phrase')
-                            filters.push(f.value);
+
+            globalFilter.forEach(function(f) {
+                if (f.type == 'phrase')
+                    filters.push(f.value);
+            });
+
+            var cb = function(response) {
+                var trends = response.trends.filter(function(t) {
+                    var trendName = t.name.toLowerCase();
+                    if (filters.indexOf(trendName) !== -1)
+                        return false;
+
+                    var filtered = trendName.split(' ').some(function(word) {
+                        return (filters.indexOf(word) !== -1);
                     });
+                    return !filtered;
+                });
 
-                    trends = trendsResponse.trends.filter(function(t) {
-                        trendName = t.name.toLowerCase();
-                        if (filters.indexOf(trendName) !== -1)
-                            return false;
+                self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+                self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+                self.setTrends(trends);
+                trends.forEach(self.getNewsForTrend, self);
 
-                        filtered = trendName.split(' ').some(function(word) {
-                            return (filters.indexOf(word) !== -1);
-                        });
-                        return !filtered;
-                    });
+                self._scheduleUpdate(TD.extensions.Trends.getAutoUpdateFrequency());
+            };
 
-                    self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
-                    self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
-                    self.setTrends(trends);
-                    trends.forEach(self.getNewsForTrend, self);
-
-                    self._scheduleUpdate(TD.extensions.Trends.getAutoUpdateFrequency());
-                },
-                function(){},
-                function(){}
-            );
+            if (woeid.indexOf('twitter:') !== -1) {
+                var client = TD.controller.clients.getClient(woeid);
+                client.getTailoredTrends(
+                    cb,
+                    $.noop
+                );
+            } else {
+                this.client.getTrendsCustom(
+                    {
+                        id: woeid,
+                        exclude: (TD.extensions.Trends.isHashtagsDisabled()) ? 'hashtags' : ''
+                    },
+                    cb,
+                    $.noop
+                );
+            }
         },
         _scheduleUpdate: function(time) {
             var self = this,
@@ -246,54 +268,58 @@
                 'https://api.twitter.com/1.1/search/tweets.json',
                 request,
                 'GET',
-                function(response) {
-                    var statuses = response.statuses, trendTweet = null, tweet, i, j, seenStories = [], newsArr = [], newsStory, safeNewsTitle;
+                function(response){
+                    var tweets = self.client.processTimeline(response.statuses),
+                        tweetsWithCards, trendTweet = null, seenStories = [], stories =[];
 
-                    for(i in statuses) {
-                        tweet = this.processTweet(statuses[i]);
-                        if(tweet.cards)
+                    tweetsWithCards = tweets.filter(function(tweet) {
+                        tweet.getUniqueMedia();
+                        return tweet.cards && !(_.isEmpty(tweet.cards.summaries) && _.isEmpty(tweet.cards.players));
+                    });
 
-                        //Find only those tweets that include media
-                        if(tweet.cards && (tweet.cards.summaries || tweet.cards.players)) {                   
-                            if (trendTweet === null)
-                                trendTweet = tweet;
-                            
-                            if (tweet.cards.summaries) {
-                                newsStory = tweet.cards.summaries[0];
-                            } else {
-                                newsStory = tweet.cards.players[0];
-                            }
-                            safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
-                            
-                            //Make sure we haven't added this story already
-                            if (seenStories.indexOf(safeNewsTitle) == -1) {
-                                var tweetText = newsStory.title +' ' +newsStory.description,
-                                    trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
-                                    matchCount = 0;
-                                //Match trend name, include word boundaries to prevent partial word matching
-                                tweetText.replace(trendNameMatch, function(all, match){
-                                    matchCount++;
-                                });
-                                if (matchCount) {
-                                    newsArr.push({
-                                        story: newsStory,
-                                        count: matchCount
-                                    });
-                                    seenStories.push(safeNewsTitle);
-                                }
-                            }
-                        }
+                    if (tweetsWithCards.length === 0) {
+                        trendTweet = new TD.services.TwitterStatus();
+                        trendTweet.cards = {summaries: []}
+                        return trendTweet;
+                    } else {
+                        trendTweet = tweetsWithCards[0];
                     }
 
-                    if (newsArr.length) {
-                         //Sort by highest num of references to trend
-                        newsArr.sort(function(value1,value2){ return value2.count - value1.count; });
-                    
-                        trendTweet.cards.summaries = [];
-                        newsArr.forEach(function(n) {
-                            trendTweet.cards.summaries.push(n.story);
-                        });
+                    stories = tweetsWithCards.reduce(function(newsArr, tweet) {
+                        var newsStory, safeNewsTitle;
+                        if (tweet.cards.summaries) {
+                            newsStory = tweet.cards.summaries[0];
+                        } else {
+                            newsStory = tweet.cards.players[0];
+                        }
+                        safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
 
+                        //Make sure we haven't added this story already
+                        if (seenStories.indexOf(safeNewsTitle) == -1) {
+                            var tweetText = newsStory.title +' ' +newsStory.description,
+                                trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
+                                matchCount = 0;
+                            //Match trend name, include word boundaries to prevent partial word matching
+                            tweetText.replace(trendNameMatch, function(all, match){
+                                matchCount++;
+                            });
+                            newsArr.push({
+                                story: newsStory,
+                                count: matchCount
+                            });
+                            seenStories.push(safeNewsTitle);
+                        }
+                        return newsArr;
+                    }, []);
+
+                    //Sort by highest num of references to trend
+                    stories.sort(function(a ,b){ return a.count - b.count; });
+
+                    trendTweet.cards.summaries = _.pluck(stories, 'story');
+                    return trendTweet;
+                },
+                function(trendTweet) {
+                    if (trendTweet.cards.summaries.length) {
                         var article = self.$column.find('article:nth-of-type(' +(index+1) +')');
                         article.find('.tweet-body')
                             .after('<div class="conversation-indicator l-cell js-show-news"><i class="icon icon-arrow-r"></i></div>');
@@ -307,8 +333,8 @@
                             });
                     }
                 },
-                function(){},
-                function(){}
+                $.noop,
+                self.client.FEED_TYPES.search
             );
         }
     });
@@ -447,7 +473,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.1.5',
+                version: '4.2.0',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
@@ -541,7 +567,7 @@
                 },
                 setAutoUpdateFrequency: function(freq) {
                     var freq = parseInt(freq, 10);
-                    if (isNaN(freq) === false) {
+                    if (isFinite(freq)) {
                         this.setStoreSetting('autoUpdateFrequency', freq);
                         this.updateAllColumns();
                     }
