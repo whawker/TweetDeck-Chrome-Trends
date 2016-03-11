@@ -5,7 +5,7 @@
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
-// @updateURL    http://www.willhawker.com/sites/default/files/js/tampermonkey.user.js
+// @updateURL    https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js
 // @copyright    2013+, William Hawker (willhawker.com)
 // ==/UserScript==
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
