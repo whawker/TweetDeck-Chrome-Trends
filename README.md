@@ -1,8 +1,6 @@
 TweetDeck Trends Column
 ================
 
-**One click install** click [here](https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js)
-
 This is a very unofficial TweetDeck extension to add a Trends column
 
 **N.B.** This is currently only compatible with **Google Chrome** (with [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo)) and **Firefox** (with [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)) and only works for **web version of TweetDeck (web.tweetdeck.com)** due to browser security policies
@@ -32,7 +30,7 @@ Add the [`tampermonkey.user.js`](https://github.com/whawker/TweetDeck-Chrome-Tre
 
 Add the [`tampermonkey.user.js`](https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js) file as a new userscript
 
-**NOTE**, this method is only compatible with [web.tweetdeck.com](https://tweetdeck.twitter.com)
+**NOTE**, this method is only compatible with [tweetdeck.twitter.com](https://tweetdeck.twitter.com)
 
 ## One click install (after installing Tampermonkey or Greasemonkey)
 Click [here](https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js)
