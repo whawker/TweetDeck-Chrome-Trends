@@ -13,7 +13,7 @@ This is a super unofficial, pretty dirty hack to add this functionality back in.
 
 ## Features
 
-1. Show trending topics for **any region** offered on the main Twitter site ~~and tailored trends!~~ (Currently broken).
+1. Show trending topics for **any region** offered on the main Twitter site and tailored trends!
 2. Show news relating to the trending topic
 3. Get news relating to trends in your language
 4. Ignore trending hashtags
@@ -34,5 +34,5 @@ Add the [`tampermonkey.user.js`](https://github.com/whawker/TweetDeck-Chrome-Tre
 
 **NOTE**, this method is only compatible with [web.tweetdeck.com](https://tweetdeck.twitter.com)
 
-## One click install
+## One click install (after installing Tampermonkey or Greasemonkey)
 Click [here](https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js)
