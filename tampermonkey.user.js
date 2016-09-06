@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.2.0
+// @version      4.2.1
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -94,7 +94,7 @@
                 accounts = TD.storage.accountController.getAccountsForService('twitter'),
                 html;
 
-            this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml).end().find('.column-scroller').css({'margin-top': '50px'});
+            this.$column.css({'border-radius': '5px'}).find('.column-options').after(selectorHtml);
             this.$locationSelect = this.$column.find('.trend-location');
             this.$locationSelect.on('change', function(event) {
                 event.preventDefault();
@@ -473,7 +473,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.2.0',
+                version: '4.2.1',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
