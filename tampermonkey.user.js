@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.2.1
+// @version      4.3.0
 // @description  Add a trending topics column to tweetdeck
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
@@ -12,7 +12,11 @@
 (function(window) {
     var $ = window.$, _ = window._, TD = window.TD, _gaq = window._gaq;
 
-    TD.util.columnUtils.filterableColumnTypes.push(TD.util.columnUtils.columnMetaTypes.UNKNOWN);
+    var oldIsFilterable = TD.vo.Column.prototype.isFilterable;
+    TD.vo.Column.prototype.isFilterable = _.wrap(oldIsFilterable, function (func) {
+        if (this.getColumnType() === 'col_unknown') return true;
+        return func.call(this);
+    });
 
     TD.services.TwitterClient.prototype.getTrendsCustom = function(params, success, error) {
         this.makeTwitterCall(
@@ -473,7 +477,7 @@
                 'zh': 'Chinese (\u4E2D\u6587)'
             };
             return {
-                version: '4.2.1',
+                version: '4.3.0',
                 init: function() {
                     //Find out which columns are trend columns
                     TD.controller.columnManager.getAllOrdered().forEach(function(col) {
