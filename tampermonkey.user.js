@@ -158,7 +158,7 @@
                         if (loc.name === title)
                             selected = 'selected';
 
-                        if (loc.placeType.name == 'Town')
+                        if (loc.placeType.name === 'Town')
                             indent = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
                         return html + '<option ' +selected +' value="' +loc.woeid +'">' +indent +loc.name +'</option>';
@@ -213,7 +213,7 @@
             this.$navLink = $('#column-navigator .column-nav-link[data-column="' +this.key +'"]');
 
             globalFilter.forEach(function(f) {
-                if (f.type == 'phrase')
+                if (f.type === 'phrase')
                     filters.push(f.value);
             });
 
@@ -232,6 +232,7 @@
 
                 self.$column.removeClass('is-shifted-1 js-column-state-detail-view').find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
                 self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
+
                 self.setTrends(trends);
                 trends.forEach(self.getNewsForTrend, self);
 
@@ -248,8 +249,7 @@
             } else {
                 this.client.trendsExtensionGetTrends(
                     {
-                        id: woeid,
-                        exclude: (TD.extensions.Trends.isHashtagsDisabled()) ? 'hashtags' : ''
+                        woeid: woeid
                     },
                     undefined,
                     cb
@@ -271,20 +271,20 @@
             datePart = datePart || 'hour';
             var today = new Date().getTime(),
                 millisecMap = {
-                'millisecond': 1,
-                'second': 1000,
-                'minute': 60000,
-                'hour': 3600000,
-                'day': 86400000
-            };
+                    'millisecond': 1,
+                    'second': 1000,
+                    'minute': 60000,
+                    'hour': 3600000,
+                    'day': 86400000
+                };
             if (!millisecMap[datePart])
                 datePart = 'millisecond';
             var offsetTime = num * millisecMap[datePart];
             return new Date(today + offsetTime);
         },
         getNewsForTrend: function(trend, index, arr) {
-            var self = this, 
-                trendName = trend.name, 
+            var self = this,
+                trendName = trend.name,
                 lang = TD.extensions.Trends.getNewsLanguage(),
                 sinceDate = this._getDateOffset(-12).toISOString().replace(/T.*/, ''),
                 request = {
@@ -328,7 +328,7 @@
                         safeNewsTitle = (newsStory.title).replace(/[^A-z]/g, '');
 
                         //Make sure we haven't added this story already
-                        if (seenStories.indexOf(safeNewsTitle) == -1) {
+                        if (seenStories.indexOf(safeNewsTitle) === -1) {
                             var tweetText = newsStory.title +' ' +newsStory.description,
                                 trendNameMatch = new RegExp('(?:^|\\s)(' + trendName + ')(?:\\s|$)', 'gmi'),
                                 matchCount = 0;
@@ -441,7 +441,8 @@
             settings.$optionList.removeClass('selected');
             settings.currentTab.destroy();
             settings.currentTab = new TD.components.TrendsColSettings;
-            settings.currentTabName = 'trendscol', $(this).addClass('selected');
+            settings.currentTabName = 'trendscol';
+            $(this).addClass('selected');
         });
         settings.$optionList.push(newItem.get(0));
 
@@ -518,8 +519,8 @@
                             trendColumns.push(trendCol);
                         }
                     });
-                    
-                    if(trendColumns.length == 0)
+
+                    if(trendColumns.length === 0)
                         this.addColumn();
 
                     this.verifySettings();
@@ -527,8 +528,8 @@
                 },
                 getDefaultSettings: function() {
                     return {
-                        'hashtagsDisabled': false, 
-                        'autoUpdateFrequency': 300000, 
+                        'hashtagsDisabled': false,
+                        'autoUpdateFrequency': 300000,
                         'newsLanguage': 'en'
                     };
                 },
@@ -577,10 +578,10 @@
                             return true;
                         return false;
                     });
-                    
+
                     if (result.length === 1)
                         return result[0];
-                    
+
                     return false;
                 },
                 updateAllColumns: function() {
@@ -620,7 +621,7 @@
                 },
                 trackGoogleAnalytics: function() {
                     //Google analytics tracking, just to see if anyone uses this
-                    if(typeof(_gaq) != 'undefined' && _gaq.push) {
+                    if (typeof(_gaq) !== 'undefined' && _gaq.push) {
                         var handle = TD.storage.accountController.getPreferredAccount().getUsername();
                         _gaq.push(['b._setAccount', 'UA-33365040-1']);
                         _gaq.push(
@@ -634,13 +635,12 @@
                         );
                     } else {
                         setTimeout(this.trackGoogleAnalytics, 500);
-                        return;
                     }
                 }
             };
         }()
     };
-    
+
     $(window.document).one('TD.ready', function() {
         TD.extensions.Trends.init();
     });
