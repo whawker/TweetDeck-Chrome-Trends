@@ -18,14 +18,27 @@
         return func.call(this);
     });
 
-    TD.services.TwitterClient.prototype.getTrendsCustom = function(params, success, error) {
+    TD.services.TwitterClient.prototype.trendsExtensionGetLocations = function (success) {
         this.makeTwitterCall(
-            this.API_BASE_URL+"trends/place.json",
-            params,
+            this.API_BASE_URL + 'trends/available.json',
+            {},
             'GET',
-            this.processTrends,
             success,
-            error
+            $.noop
+        );
+    };
+
+    TD.services.TwitterClient.prototype.trendsExtensionGetTrends = function (params, account, success) {
+        this.request(
+            this.API_BASE_URL + 'trends/plus.json',
+            {
+                method: 'GET',
+                params: params,
+                account: account,
+                handleSuccess: true,
+                handleError: true,
+                processor: success
+            }
         );
     };
 
@@ -91,6 +104,19 @@
         getKey: function() {
             return this.key;
         },
+        getLocationParents: function (map, location) {
+            if (location.placeType.name === 'Town') return map;
+
+            map[location.woeid] = location.name;
+            return map;
+        },
+        getSortString: function (location, parentLocations) {
+            if (location.parentid === 0) return '';
+            if (location.parentid === 1) return location.name.replace(/\s+/g, '');
+
+            var parentName = parentLocations[location.parentid];
+            return (parentName + location.name).replace(/\s+/g, '');
+        },
         populate: function() {
             var self = this,
                 selectorHtml = '<div class="control-group stream-item" style="margin: 10px 0 0; padding-bottom: 10px;"><label for="trend-location" style="width: 100px; font-weight: bold; margin-left: 5px;" class="control-label">Trend Location</label> <div class="controls" style="margin-left: 113px;"><select name="trend-location" class="trend-location" style="width: 190px;"></select></div></div>',
@@ -118,12 +144,13 @@
             }, '<optgroup label="Tailored Trends">');
             html += '</optgroup>';
 
-            this.client.getTrendLocations(
+            this.client.trendsExtensionGetLocations(
                 function(locations){
-                    locations.sort(function(e, t) {
-                        var n = (e.sortString === 'Worldwide') ? '' : e.sortString,
-                            r = (t.sortString === 'Worldwide') ? '' : t.sortString;
-                        return n < r ? -1 : n > r ? 1 : 0;
+                    var parents = locations.reduce(self.getLocationParents, {});
+                    locations.sort(function(a, b) {
+                        var aSort = self.getSortString(a, parents),
+                            bSort = self.getSortString(b, parents);
+                        return aSort.localeCompare(bSort);
                     });
 
                     html = locations.reduce(function(html, loc) {
@@ -191,7 +218,8 @@
             });
 
             var cb = function(response) {
-                var trends = response.trends.filter(function(t) {
+                var trendsRaw = response.modules.map(function (m) { return m.trend });
+                var trends = trendsRaw.filter(function(t) {
                     var trendName = t.name.toLowerCase();
                     if (filters.indexOf(trendName) !== -1)
                         return false;
@@ -211,19 +239,20 @@
             };
 
             if (woeid.indexOf('twitter:') !== -1) {
-                var client = TD.controller.clients.getClient(woeid);
-                client.getTailoredTrends(
-                    cb,
-                    $.noop
+                var accountId = woeid.replace(/^twitter:/, '');
+                this.client.trendsExtensionGetTrends(
+                    {},
+                    TD.storage.accountController.getAccountFromId(accountId),
+                    cb
                 );
             } else {
-                this.client.getTrendsCustom(
+                this.client.trendsExtensionGetTrends(
                     {
                         id: woeid,
                         exclude: (TD.extensions.Trends.isHashtagsDisabled()) ? 'hashtags' : ''
                     },
-                    cb,
-                    $.noop
+                    undefined,
+                    cb
                 );
             }
         },
