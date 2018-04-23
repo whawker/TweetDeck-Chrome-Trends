@@ -234,7 +234,7 @@
                 self.$navLink.find('.icon-twitter-bird').removeClass('icon-twitter-bird').addClass('icon-trending');
 
                 self.setTrends(trends);
-                trends.forEach(self.getNewsForTrend, self);
+                // trends.forEach(self.getNewsForTrend, self); Broken
 
                 self._scheduleUpdate(TD.extensions.Trends.getAutoUpdateFrequency());
             };
