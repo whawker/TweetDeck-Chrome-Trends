@@ -14,7 +14,7 @@
 
     var oldIsFilterable = TD.vo.Column.prototype.isFilterable;
     TD.vo.Column.prototype.isFilterable = _.wrap(oldIsFilterable, function (func) {
-        if (this.getColumnType() === 'col_unknown') return true;
+        if (this.isOfType('col_unknown')) return true;
         return func.call(this);
     });
 
