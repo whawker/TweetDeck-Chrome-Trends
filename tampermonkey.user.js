@@ -1,8 +1,9 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         Tweetdeck Userscript
 // @namespace    http://web.tweetdeck.com/
-// @version      4.4.0
+// @version      4.5.0
 // @description  Add a trending topics column to tweetdeck
+// @require      http://code.jquery.com/jquery-2.2.4.min.js
 // @include      https://tweetdeck.twitter.com/
 // @run-at       document-end
 // @updateURL    https://github.com/whawker/TweetDeck-Chrome-Trends/raw/master/tampermonkey.user.js
@@ -10,13 +11,13 @@
 // ==/UserScript==
 //Trends column extension by Will Hawker (www.willhawker.com || www.github.com/whawker/TweetDeck-Chrome-Trends)
 (function(window) {
-    var $ = window.$, _ = window._, TD = window.TD, _gaq = window._gaq;
+    var $ = jQuery.noConflict(), TD = window.TD, _gaq = window._gaq;
 
     var oldIsFilterable = TD.vo.Column.prototype.isFilterable;
-    TD.vo.Column.prototype.isFilterable = _.wrap(oldIsFilterable, function (func) {
+    TD.vo.Column.prototype.isFilterable = function () {
         if (this.isOfType('col_unknown')) return true;
-        return func.call(this);
-    });
+        return oldIsFilterable.call(this);
+    }
 
     TD.services.TwitterClient.prototype.trendsExtensionGetLocations = function (success) {
         this.makeTwitterCall(
@@ -307,7 +308,7 @@
 
                     tweetsWithCards = tweets.filter(function(tweet) {
                         tweet.getUniqueMedia();
-                        return tweet.cards && !(_.isEmpty(tweet.cards.summaries) && _.isEmpty(tweet.cards.players));
+                        return tweet.cards && !(TD.util.isEmpty(tweet.cards.summaries) && TD.util.isEmpty(tweet.cards.players));
                     });
 
                     if (tweetsWithCards.length === 0) {
@@ -348,7 +349,7 @@
                     //Sort by highest num of references to trend
                     stories.sort(function(a ,b){ return a.count - b.count; });
 
-                    trendTweet.cards.summaries = _.pluck(stories, 'story');
+                    trendTweet.cards.summaries = TD.util.pluck(stories, 'story');
                     return trendTweet;
                 },
                 function(trendTweet) {
@@ -398,10 +399,10 @@
         this.$autoUpdateFrequency.on('change', this.updateAutoUpdateFrequency);
         this.$disableHashtags = $('#disable-hashtags');
         this.$disableHashtags.prop('checked', TD.extensions.Trends.isHashtagsDisabled());
-        this.$disableHashtags.change(_.bind(this.toggleHashtags, this));
+        this.$disableHashtags.change(this.toggleHashtags.bind(this));
         this.$lang = $('#news-language');
         this.$lang.val(TD.extensions.Trends.getNewsLanguage());
-        this.$lang.change(_.bind(this.toggleNewsLanguage, this));
+        this.$lang.change(this.toggleNewsLanguage.bind(this));
     }).methods({
         destroy: function(a) {
             this.$fieldset.remove();
@@ -641,7 +642,10 @@
         }()
     };
 
-    $(window.document).one('TD.ready', function() {
+    var waitForReady = window.setInterval(function () {
+        if (!TD.ready) return;
+
+        window.clearInterval(waitForReady);
         TD.extensions.Trends.init();
     });
 }(unsafeWindow));
