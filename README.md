@@ -1,6 +1,16 @@
 TweetDeck Trends Column
 ================
 
+> ## Update July 2018
+> TweetDeck has added an **official** trending column, therefore I will no longer be maintaining this project.
+> 
+> To use the official trending column, please 
+> 
+> 1. Delete or disable this userscript
+> 1. Refresh the TweetDeck application
+> 1. Click on the "+" button on the side bar, and add a "Trending" column
+
+## Userscript
 This is a very unofficial TweetDeck extension to add a Trends column
 
 **N.B.** This is currently only compatible with **Google Chrome** (with [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo)) and **Firefox** (with [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/)) and only works for **web version of TweetDeck (web.tweetdeck.com)** due to browser security policies
